@@ -1,3 +1,25 @@
+/*
+ * CVB server.
+ * Copyright (c) 2025 Antoni Blanche
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the “Software”), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -13,7 +35,7 @@
 #define NO_TIMEOUT -1
 
 /*
- * Try each address in the list until a socket successfully bind
+ * Try each address in the list until successfully bind a socket.
  */
 static int bind_socket(const struct addrinfo *rp)
 {
@@ -37,7 +59,7 @@ static int bind_socket(const struct addrinfo *rp)
 }
 
 /*
- *
+ * Fetch a socket and bind it.
  */
 static int fetch_socket(const char *const host, const char *const service)
 {
@@ -69,6 +91,9 @@ static int fetch_socket(const char *const host, const char *const service)
         return sfd;
 }
 
+/*
+ * Accept a new client connection.
+ */
 static int clnt_connect(int listener)
 {
         struct sockaddr addr;
@@ -98,6 +123,9 @@ static int clnt_connect(int listener)
         return sfd;
 }
 
+/*
+ * Receive a message from a connected client.
+ */
 static int clnt_msg(int sfd)
 {
         char buf[BUFSIZ];
@@ -122,7 +150,7 @@ static int clnt_msg(int sfd)
 }
 
 /*
- *
+ * Server's main loop.
  */
 static void loop(int listener)
 {
@@ -137,7 +165,6 @@ static void loop(int listener)
 
         for (;;) {
                 ready = poll(fdl_array(fdl), fdl_lenght(fdl), NO_TIMEOUT);
-                /* printf("Data (fdl lenght %lu)\n", fdl_lenght(fdl)); */
 
                 if (ready < 0) {
                         perror("poll()");
@@ -146,6 +173,7 @@ static void loop(int listener)
 
                 ifd = 0;
 
+                /* TODO refactor */
                 while (ready > 0) {
                         for (; ifd < fdl_lenght(fdl); ++ifd) {
                                 if (fdl_get(fdl, ifd).revents == POLLIN) {
@@ -166,7 +194,7 @@ static void loop(int listener)
 }
 
 /*
- *
+ * Server's main function.
  */
 int main(const int argc, const char *const argv[])
 {
