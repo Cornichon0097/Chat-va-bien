@@ -1,2 +1,2 @@
 # Chat-va-bien
-Chat group based on home-made RFC
+Group chat app based on home-made RFC 
