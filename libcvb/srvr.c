@@ -32,6 +32,9 @@
 
 #include <cvb/fdlist.h>
 
+/*
+ * Infinite timeout for the poll() function.
+ */
 #define NO_TIMEOUT -1
 
 /*

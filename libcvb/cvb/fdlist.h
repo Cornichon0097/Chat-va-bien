@@ -31,7 +31,7 @@
 #define FDLIST_INIT {NULL, 0, 0}
 
 /*
- *
+ * The file descriptors list structure.
  */
 struct fdlist {
         struct pollfd *fds;
