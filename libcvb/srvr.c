@@ -28,9 +28,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <stdio.h>
-
 #include <cvb/fdlist.h>
+
+#include <errno.h>
+#include <log.h>
 
 /*
  * Infinite timeout for the poll() function.
@@ -80,9 +81,9 @@ static int fetch_socket(const char *const host, const char *const service)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        perror("getaddrinfo()");
+                        log_fatal("getaddrinfo(): %s\n", strerror(errno));
                 else
-                        fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(rc));
+                        log_fatal("getaddrinfo(): %s\n", gai_strerror(rc));
 
                 exit(EXIT_FAILURE);
         }
@@ -108,7 +109,7 @@ static int clnt_connect(int listener)
         sfd = accept(listener, &addr, &addrlen);
 
         if (sfd < 0) {
-                perror("accept()");
+                log_warn("accept(): %s\n", strerror(errno));
                 return -1;
         }
 
@@ -117,11 +118,11 @@ static int clnt_connect(int listener)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        perror("getnameinfo()");
+                        log_warn("getnameinfo(): %s\n", strerror(errno));
                 else
-                        fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(rc));
+                        log_warn("getnameinfo(): %s\n", gai_strerror(rc));
         } else
-                printf("New connection from %s:%s\n", host, service);
+                log_info("New connection from %s:%s\n", host, service);
 
         return sfd;
 }
@@ -138,16 +139,16 @@ static int clnt_msg(int sfd)
 
         if (nread <= 0) {
                 if (nread < 0)
-                        perror("reecv()");
+                        log_error("reecv(): %s\n", strerror(errno));
                 else
-                        printf("Client disconnected\n");
+                        log_info("Client disconnected\n");
 
                 close(sfd);
                 return -1;
         }
 
         buf[nread - 1] = '\0';
-        printf("%d bytes received: %s\n", nread, buf);
+        log_info("%d bytes received: %s\n", nread, buf);
 
         return nread;
 }
@@ -207,19 +208,23 @@ int main(const int argc, const char *const argv[])
         /* TODO parse command line */
 
         if (argc != 2) {
-                fprintf(stderr, "Usage: %s port\n", argv[0]);
+                log_debug("Usage: %s port\n", argv[0]);
+                log_info("Usage: %s port\n", argv[0]);
+                log_warn("Usage: %s port\n", argv[0]);
+                log_error("Usage: %s port\n", argv[0]);
+                log_fatal("Usage: %s port\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
 
         listener = fetch_socket(NULL, argv[1]);
 
         if (listener < 0) {
-               fprintf(stderr, "Failed to bind a socket\n");
+               log_fatal("Failed to bind a socket\n");
                exit(EXIT_FAILURE);
         }
 
         if (listen(listener, 10) != 0) {
-                perror("listen()");
+                log_fatal("listen(): %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
         }
 
