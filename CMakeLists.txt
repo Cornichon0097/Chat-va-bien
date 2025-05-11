@@ -12,4 +12,5 @@ set(gcc_like_c "$<COMPILE_LANG_AND_ID:C,GNU>")
 target_compile_options(compiler_flags INTERFACE
     "$<${gcc_like_c}:$<BUILD_INTERFACE:-Wall;-Wextra;-Wwrite-strings;-Wstrict-prototypes;-Wunreachable-code;-Werror>>")
 
+add_subdirectory(liblog)
 add_subdirectory(libcvb)
