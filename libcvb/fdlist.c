@@ -30,9 +30,9 @@
 #define DEFAULT_SIZE 10UL
 
 /*
- * Apply a left shift on a file descriptors list.
+ * Perform a left shift on a file descriptors list.
  */
-static void fdl_left_shift(struct fdlist *const fdl, const nfds_t start)
+static void fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
 {
         nfds_t i;
 
@@ -83,7 +83,7 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
 
         for (i = 0; i < fdl->size; ++i) {
                 if (fdl->fds[i].fd == fd) {
-                        fdl_left_shift(fdl, i);
+                        fdl_shift_left(fdl, i);
                         --fdl->cursor;
                         return 0;
                 }
