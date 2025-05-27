@@ -1,5 +1,5 @@
 /*
- * CVB server.
+ * CVB client.
  * Copyright (c) 2025 Antoni Blanche
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,10 +28,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <cvb/fdlist.h>
+#include <stdio.h>
 
-#include <errno.h>
-#include <log.h>
+#include <cvb/fdlist.h>
 
 /*
  * Infinite timeout for the poll() function.
@@ -39,20 +38,17 @@
 #define NO_TIMEOUT -1
 
 /*
- * Try each address in the list until successfully bind a socket.
+ * Try each address in the list until successfully connect a socket.
  */
-static int bind_socket(const struct addrinfo *rp)
+static int connect_socket(const struct addrinfo *rp)
 {
-        int sfd, optval = 1;
+        int sfd;
 
         for (; rp != NULL; rp = rp->ai_next) {
                 sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
 
                 if (sfd >= 0) {
-                        setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
-                                   &optval, sizeof(int));
-
-                        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
+                        if (connect(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
                                 return sfd;
                 }
 
@@ -63,7 +59,7 @@ static int bind_socket(const struct addrinfo *rp)
 }
 
 /*
- * Fetch a socket and bind it.
+ * Fetch a socket and connect it.
  */
 static int fetch_socket(const char *const host, const char *const service)
 {
@@ -75,20 +71,20 @@ static int fetch_socket(const char *const host, const char *const service)
         hints.ai_family   = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = 0;
-        hints.ai_flags    = AI_PASSIVE;
+        hints.ai_flags    = 0;
 
         rc = getaddrinfo(host, service, &hints, &res);
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_fatal("getaddrinfo(): %s\n", strerror(errno));
+                        perror("getaddrinfo()");
                 else
-                        log_fatal("getaddrinfo(): %s\n", gai_strerror(rc));
+                        fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(rc));
 
                 exit(EXIT_FAILURE);
         }
 
-        sfd = bind_socket(res);
+        sfd = connect_socket(res);
 
         freeaddrinfo(res);
 
@@ -109,7 +105,7 @@ static int clnt_connect(int listener)
         sfd = accept(listener, &addr, &addrlen);
 
         if (sfd < 0) {
-                log_warn("accept(): %s\n", strerror(errno));
+                perror("accept()");
                 return -1;
         }
 
@@ -118,11 +114,11 @@ static int clnt_connect(int listener)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_warn("getnameinfo(): %s\n", strerror(errno));
+                        perror("getnameinfo()");
                 else
-                        log_warn("getnameinfo(): %s\n", gai_strerror(rc));
+                        fprintf(stderr, "getnameinfo(): %s\n", gai_strerror(rc));
         } else
-                log_info("New connection from %s:%s\n", host, service);
+                printf("New connection from %s:%s\n", host, service);
 
         return sfd;
 }
@@ -139,30 +135,36 @@ static int clnt_msg(int sfd)
 
         if (nread <= 0) {
                 if (nread < 0)
-                        log_error("reecv(): %s\n", strerror(errno));
+                        perror("reecv()");
                 else
-                        log_info("Client disconnected\n");
+                        printf("Client disconnected\n");
 
                 close(sfd);
                 return -1;
         }
 
         buf[nread - 1] = '\0';
-        log_info("%d bytes received: %s\n", nread, buf);
+        printf("%d bytes received: %s\n", nread, buf);
 
         return nread;
 }
 
 /*
- * Server's main loop.
+ * Client's main loop.
  */
-static void loop(int listener)
+static void loop(int server)
 {
         struct fdlist fdl = FDLIST_INIT;
+        char buf[BUFSIZ];
         nfds_t ifd;
         int ready;
 
-        if (fdl_add(&fdl, listener) < 0) {
+        if (fdl_add(&fdl, STDIN_FILENO) < 0) {
+                perror("fdl_add()");
+                exit(EXIT_FAILURE);
+        }
+
+        if (fdl_add(&fdl, server) < 0) {
                 perror("fdl_add()");
                 exit(EXIT_FAILURE);
         }
@@ -181,11 +183,10 @@ static void loop(int listener)
                 while (ready > 0) {
                         for (; ifd < fdl_lenght(fdl); ++ifd) {
                                 if (fdl_get(fdl, ifd).revents == POLLIN) {
-                                        if (fdl_get(fdl, ifd).fd == listener)
-                                                fdl_add(&fdl, clnt_connect(fdl_get(fdl, ifd).fd));
-                                        else {
-                                                if (clnt_msg(fdl_get(fdl, ifd).fd) < 0)
-                                                        fdl_remove(&fdl, fdl_get(fdl, ifd).fd);
+                                        if (fdl_get(fdl, ifd).fd == STDIN_FILENO) {
+                                                read(STDIN_FILENO, buf, sizeof(buf));
+                                                fdl_get(fdl, 1).events = POLLOUT; /* warning, change the fixed idf */
+                                        } else {
                                         }
 
                                         --ready;
@@ -198,39 +199,30 @@ static void loop(int listener)
 }
 
 /*
- * Server's main function.
+ * Client's main function.
  */
 int main(const int argc, const char *const argv[])
 {
-        int listener;
+        int server;
 
         /* TODO better log system  */
         /* TODO parse command line */
 
-        if (argc != 2) {
-                log_debug("Usage: %s port\n", argv[0]);
-                log_info("Usage: %s port\n", argv[0]);
-                log_warn("Usage: %s port\n", argv[0]);
-                log_error("Usage: %s port\n", argv[0]);
-                log_fatal("Usage: %s port\n", argv[0]);
+        if (argc != 3) {
+                fprintf(stderr, "Usage: %s host port\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
 
-        listener = fetch_socket(NULL, argv[1]);
+        server = fetch_socket(argv[1], argv[2]);
 
-        if (listener < 0) {
-               log_fatal("Failed to bind a socket\n");
+        if (server < 0) {
+               fprintf(stderr, "Failed to connect a socket\n");
                exit(EXIT_FAILURE);
         }
 
-        if (listen(listener, 10) != 0) {
-                log_fatal("listen(): %s\n", strerror(errno));
-                exit(EXIT_FAILURE);
-        }
+        loop(server);
 
-        loop(listener);
-
-        close(listener);
+        close(server);
 
         return EXIT_SUCCESS;
 }
