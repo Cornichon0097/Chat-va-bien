@@ -76,7 +76,7 @@ static const char *const level_colors[] = {
 /*
  * Set time and udata of a logging event.
  */
-static void set_log_event(struct log_event *ev, void *udata)
+static void set_log_event(struct log_event *const ev, void *const udata)
 {
         time_t t = time(NULL);
 
@@ -89,7 +89,7 @@ static void set_log_event(struct log_event *ev, void *udata)
 /*
  * Print a logging event.
  */
-static void stdout_callback(struct log_event *ev)
+static void stdout_callback(struct log_event *const ev)
 {
         char buf[16];
 
@@ -112,7 +112,7 @@ static void stdout_callback(struct log_event *ev)
 /*
  * Print a logging event in a specific file.
  */
-static void file_callback(struct log_event *ev)
+static void file_callback(struct log_event *const ev)
 {
         char buf[64];
 
@@ -147,7 +147,7 @@ static void log_unlock(void)
 /*
  * Set the logging level.
  */
-const char *log_level(int level)
+const char *log_level(const int level)
 {
         logger.level = level;
 
@@ -157,7 +157,7 @@ const char *log_level(int level)
 /*
  * Set the logging locker and udata.
  */
-void log_locker(log_lock_t fn, void *udata)
+void log_locker(log_lock_t fn, void *const udata)
 {
         logger.lock = fn;
         logger.udata = udata;
@@ -166,7 +166,7 @@ void log_locker(log_lock_t fn, void *udata)
 /*
  * Enable quiet mod.
  */
-void log_quiet(bool enable)
+void log_quiet(const bool enable)
 {
         logger.quiet = enable;
 }
@@ -174,7 +174,7 @@ void log_quiet(bool enable)
 /*
  * Add a callback.
  */
-int log_callback(log_fn_t fn, void *udata, int level)
+int log_callback(log_fn_t fn, void *const udata, const int level)
 {
         int i;
 
@@ -194,7 +194,7 @@ int log_callback(log_fn_t fn, void *udata, int level)
 /*
  * Add a callback to write in a file.
  */
-int log_fp(FILE *fp, int level)
+int log_fp(FILE *const fp, const int level)
 {
         return log_callback(&file_callback, fp, level);
 }
@@ -202,7 +202,8 @@ int log_fp(FILE *fp, int level)
 /*
  * Logging function.
  */
-void log_log(int level, const char *file, int line, const char *fmt, ...)
+void log_log(const int level, const char *const file,
+             const int line, const char *const fmt, ...)
 {
         struct log_event ev = LOG_EVENT_INIT;
         struct callback *cb;
