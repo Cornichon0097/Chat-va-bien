@@ -36,30 +36,27 @@ static void fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
 {
         nfds_t i;
 
-        for (i = start; i < fdl->size - 1; ++i)
+        for (i = start; i < fdl->nfds - 1; ++i)
                 fdl->fds[i] = fdl->fds[i + 1];
 }
 
 /*
  * Add a file descriptor in a list.
  */
-int fdl_add(struct fdlist *const fdl, const int fd)
+int fdl_add(struct fdlist *const fdl, const int fd, const short events)
 {
         if (fdl->fds == NULL) {
-                fdl->fds = (struct pollfd *)
-                        malloc(DEFAULT_SIZE * sizeof(struct pollfd));
+                fdl->fds = (struct pollfd *) malloc(DEFAULT_SIZE * sizeof(struct pollfd));
 
                 if (fdl->fds == NULL)
                         return -1;
 
                 fdl->size = DEFAULT_SIZE;
-                fdl->cursor = 0;
+                fdl->nfds = 0;
         }
 
-        if (fdl->cursor >= fdl->size) {
-                fdl->fds = (struct pollfd *)
-                        realloc(fdl->fds, fdl->size + DEFAULT_SIZE
-                                                    * sizeof(struct pollfd));
+        if (fdl->nfds >= fdl->size) {
+                fdl->fds = (struct pollfd *) realloc(fdl->fds, (fdl->size + DEFAULT_SIZE) * sizeof(struct pollfd));
 
                 if (fdl->fds == NULL)
                         return -1;
@@ -67,11 +64,23 @@ int fdl_add(struct fdlist *const fdl, const int fd)
                 fdl->size = fdl->size + DEFAULT_SIZE;
         }
 
-        fdl->fds[fdl->cursor].fd = fd;
-        fdl->fds[fdl->cursor].events = POLLIN;
-        ++fdl->cursor;
+        fdl->fds[fdl->nfds].fd = fd;
+        fdl->fds[fdl->nfds].events = events;
+        ++fdl->nfds;
 
         return 0;
+}
+
+struct pollfd *fdl_get(const struct fdlist *const fdl, const int fd)
+{
+        nfds_t i;
+
+        for (i = 0; i < fdl->nfds; ++i) {
+                if (fdl->fds[i].fd == fd)
+                        return fdl->fds + i;
+        }
+
+        return NULL;
 }
 
 /*
@@ -81,10 +90,10 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
 {
         nfds_t i;
 
-        for (i = 0; i < fdl->size; ++i) {
+        for (i = 0; i < fdl->nfds; ++i) {
                 if (fdl->fds[i].fd == fd) {
                         fdl_shift_left(fdl, i);
-                        --fdl->cursor;
+                        --fdl->nfds;
                         return 0;
                 }
         }
@@ -99,6 +108,6 @@ void fdl_destroy(struct fdlist *const fdl)
 {
         free(fdl->fds);
         fdl->fds = NULL;
+        fdl->nfds = 0;
         fdl->size = 0;
-        fdl->cursor = 0;
 }

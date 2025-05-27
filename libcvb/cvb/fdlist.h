@@ -20,8 +20,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef FDLIST_H
-#define FDLIST_H
+#ifndef CVB_FDLIST_H
+#define CVB_FDLIST_H
 
 #include <poll.h>
 
@@ -35,29 +35,19 @@
  */
 struct fdlist {
         struct pollfd *fds;
+        nfds_t nfds;
         nfds_t size;
-        nfds_t cursor;
 };
 
 /*
- * Return a file descriptors list as an array.
+ * Add fd to fdl
  */
-#define fdl_array(fdl) (fdl.fds)
+int fdl_add(struct fdlist *fdl, int fd, short events);
 
 /*
- * Return the lenght of a file descriptors list.
+ * Access the file descriptor stored at index i.
  */
-#define fdl_lenght(fdl) (fdl.cursor)
-
-/*
- * Return a file descriptor from a list.
- */
-#define fdl_get(fdl, i) (fdl.fds[i])
-
-/*
- * Add a file descriptor in a list.
- */
-int fdl_add(struct fdlist *fdl, int fd);
+struct pollfd *fdl_get(const struct fdlist *const fdl, int fd);
 
 /*
  * Remove a file descriptor from a list.
@@ -69,4 +59,4 @@ int fdl_remove(struct fdlist *fdl, int fd);
  */
 void fdl_destroy(struct fdlist *fdl);
 
-#endif /* fdlist.h */
+#endif /* cvb/fdlist.h */
