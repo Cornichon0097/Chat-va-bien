@@ -1,5 +1,7 @@
-/*
- * Functions dealing with file descriptors lists.
+/**
+ * \file       fdlist.c
+ * \brief      Functions dealing with file descriptors lists.
+ *
  * Copyright (c) 2025 Antoni Blanche
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,13 +26,21 @@
 
 #include <cvb/fdlist.h>
 
-/*
- * Default file descriptors list size.
+/**
+ * \brief      Default list size
+ *
+ * The default size of a file descriptors list.
  */
-#define DEFAULT_SIZE 10UL
+#define DEFAULT_SIZE 10
 
-/*
- * Perform a left shift on a file descriptors list.
+/**
+ * \brief      Perform a left shift
+ *
+ * The \c fdl_shift_left() function moves to the left each elements of the file
+ * descriptors list \a fdl from \a start.
+ *
+ * \param      fdl    The file descriptors list
+ * \param[in]  start  The first element to move
  */
 static void fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
 {
@@ -40,8 +50,17 @@ static void fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
                 fdl->fds[i] = fdl->fds[i + 1];
 }
 
-/*
- * Add a file descriptor in a list.
+/**
+ * \brief      Add a file descriptor
+ *
+ * The \c fdl_add() function adds the file descriptor \a fd at the end of the
+ * file descriptor list \a fdl.
+ *
+ * \param      fdl     The file descriptiors list
+ * \param[in]  fd      The file descriptor to add
+ * \param[in]  events  The requested events
+ *
+ * \return     0 on success, -1 otherwise
  */
 int fdl_add(struct fdlist *const fdl, const int fd, const short events)
 {
@@ -71,6 +90,19 @@ int fdl_add(struct fdlist *const fdl, const int fd, const short events)
         return 0;
 }
 
+/**
+ * \brief      Access a file descriptor
+ *
+ * The \c dl_get() function returns the first occurence of \a fd in the file
+ * descriptors list \a fdl as a <tt>pollfd struct<tt>. If \a fd is not found in
+ * \a fdl, then \c fdl_get() returns NULL.If there are other occurrences of
+ * \a fd left in \a fdl, they are ignored.
+ *
+ * \param[in]  fdl   The file descriptors list
+ * \param[in]  fd    The file descriptor wanted
+ *
+ * \return     The <tt>struct pollfd<tt> of \a fd
+ */
 struct pollfd *fdl_get(const struct fdlist *const fdl, const int fd)
 {
         nfds_t i;
@@ -83,8 +115,19 @@ struct pollfd *fdl_get(const struct fdlist *const fdl, const int fd)
         return NULL;
 }
 
-/*
- * Remove a file descriptor from a list.
+/**
+ * \brief      Remove a file descriptor
+ *
+ * The \c fdl_remove() function removes the first occurence of \a fd in the file
+ * descriptors list \a fdl. After removing an element, \c fdl_remove() moves to
+ * the left all the file descriptors that are after \a fd in the list. If \a fd
+ * is not found in \a fdl, then \c fdl_remove() does nothing and returns -1. If
+ * there are other occurrences of \a fd left in \a fdl, they are ignored.
+ *
+ * \param      fdl   The file descriptors list
+ * \param[in]  fd    The file descriptor to remove
+ *
+ * \return     0 on success, -1 otherwise
  */
 int fdl_remove(struct fdlist *const fdl, const int fd)
 {
@@ -101,8 +144,13 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
         return -1;
 }
 
-/*
- * Destroy a file descriptors list.
+/**
+ * \brief      Destroy a file descriptors list
+ *
+ * The \c fdl_destroy() removes all the content of the file descriptoors list
+ * \a fdl and free the allocated memory.
+ *
+ * \param      fdl   The file descriptors list
  */
 void fdl_destroy(struct fdlist *const fdl)
 {
