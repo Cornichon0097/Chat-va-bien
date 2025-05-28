@@ -23,15 +23,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+#include <net.h>
+#include <logger.h>
 
 #include <cvb/fdlist.h>
-
-#include <errno.h>
-#include <log.h>
 
 /*
  * Infinite timeout for the poll() function.
@@ -39,157 +36,39 @@
 #define NO_TIMEOUT -1
 
 /*
- * Try each address in the list until successfully bind a socket.
- */
-static int bind_socket(const struct addrinfo *rp)
-{
-        int sfd, optval = 1;
-
-        for (; rp != NULL; rp = rp->ai_next) {
-                sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-
-                if (sfd >= 0) {
-                        setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
-                                   &optval, sizeof(int));
-
-                        if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-                                return sfd;
-                }
-
-                close(sfd);
-        }
-
-        return -1;
-}
-
-/*
- * Fetch a socket and bind it.
- */
-static int fetch_socket(const char *const host, const char *const service)
-{
-        struct addrinfo hints, *res;
-        int sfd;
-        int rc;
-
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family   = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = 0;
-        hints.ai_flags    = AI_PASSIVE;
-
-        rc = getaddrinfo(host, service, &hints, &res);
-
-        if (rc != 0) {
-                if (rc == EAI_SYSTEM)
-                        log_fatal("getaddrinfo(): %s\n", strerror(errno));
-                else
-                        log_fatal("getaddrinfo(): %s\n", gai_strerror(rc));
-
-                exit(EXIT_FAILURE);
-        }
-
-        sfd = bind_socket(res);
-
-        freeaddrinfo(res);
-
-        return sfd;
-}
-
-/*
- * Accept a new client connection.
- */
-static int clnt_connect(int listener)
-{
-        struct sockaddr addr;
-        socklen_t addrlen;
-        char host[NI_MAXHOST], service[NI_MAXSERV];
-        int sfd;
-        int rc;
-
-        sfd = accept(listener, &addr, &addrlen);
-
-        if (sfd < 0) {
-                log_warn("accept(): %s\n", strerror(errno));
-                return -1;
-        }
-
-        rc = getnameinfo(&addr, addrlen, host, NI_MAXHOST,
-                         service, NI_MAXSERV, NI_NUMERICHOST);
-
-        if (rc != 0) {
-                if (rc == EAI_SYSTEM)
-                        log_warn("getnameinfo(): %s\n", strerror(errno));
-                else
-                        log_warn("getnameinfo(): %s\n", gai_strerror(rc));
-        } else
-                log_info("New connection from %s:%s\n", host, service);
-
-        return sfd;
-}
-
-/*
- * Receive a message from a connected client.
- */
-static int clnt_msg(int sfd)
-{
-        char buf[BUFSIZ];
-        int nread;
-
-        nread = recv(sfd, buf, sizeof(buf), 0);
-
-        if (nread <= 0) {
-                if (nread < 0)
-                        log_error("reecv(): %s\n", strerror(errno));
-                else
-                        log_info("Client disconnected\n");
-
-                close(sfd);
-                return -1;
-        }
-
-        buf[nread - 1] = '\0';
-        log_info("%d bytes received: %s\n", nread, buf);
-
-        return nread;
-}
-
-/*
  * Server's main loop.
  */
 static void loop(int listener)
 {
         struct fdlist fdl = FDLIST_INIT;
-        nfds_t ifd;
+        struct pollfd *ifd;
+        char buf[BUFSIZ];
         int ready;
 
-        if (fdl_add(&fdl, listener) < 0) {
-                perror("fdl_add()");
+        if (fdl_add(&fdl, listener, POLLIN) < 0) {
+                log_fatal("fdl_add(): %s\n", strerror(errno));
                 exit(EXIT_FAILURE);
         }
 
         for (;;) {
-                ready = poll(fdl_array(fdl), fdl_lenght(fdl), NO_TIMEOUT);
+                ready = poll(fdl.fds, fdl.nfds, NO_TIMEOUT);
 
                 if (ready < 0) {
-                        perror("poll()");
+                        log_fatal("poll(): %s\n", strerror(errno));
                         exit(EXIT_FAILURE);
                 }
 
-                ifd = 0;
-
                 /* TODO refactor */
-                while (ready > 0) {
-                        for (; ifd < fdl_lenght(fdl); ++ifd) {
-                                if (fdl_get(fdl, ifd).revents == POLLIN) {
-                                        if (fdl_get(fdl, ifd).fd == listener)
-                                                fdl_add(&fdl, clnt_connect(fdl_get(fdl, ifd).fd));
-                                        else {
-                                                if (clnt_msg(fdl_get(fdl, ifd).fd) < 0)
-                                                        fdl_remove(&fdl, fdl_get(fdl, ifd).fd);
-                                        }
-
-                                        --ready;
+                for (ifd = fdl.fds; ready > 0; ++ifd) {
+                        if (ifd->revents == POLLIN) {
+                                if (ifd->fd == listener)
+                                        fdl_add(&fdl, clnt_connect(ifd->fd), POLLIN);
+                                else {
+                                        if (read_msg(ifd->fd, buf, BUFSIZ) < 0)
+                                                fdl_remove(&fdl, ifd->fd);
                                 }
+
+                                --ready;
                         }
                 }
         }
@@ -213,16 +92,6 @@ int main(const int argc, const char *const argv[])
         }
 
         listener = fetch_socket(NULL, argv[1]);
-
-        if (listener < 0) {
-               log_fatal("Failed to bind a socket\n");
-               exit(EXIT_FAILURE);
-        }
-
-        if (listen(listener, 10) != 0) {
-                log_fatal("listen(): %s\n", strerror(errno));
-                exit(EXIT_FAILURE);
-        }
 
         loop(listener);
 
