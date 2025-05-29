@@ -5,6 +5,8 @@ int fetch_socket(const char *host, const char *service);
 
 int clnt_connect(int listener);
 
-int read_msg(int sfd, char *buf, size_t size);
+int send_msg(int sfd, const void *msg, size_t size);
+
+int read_msg(int sfd, void *msg, size_t size);
 
 #endif /* net.h */

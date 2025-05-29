@@ -25,10 +25,11 @@
 #include <string.h>
 #include <errno.h>
 
-#include <net.h>
+#include <cvb/fdlist.h>
+
 #include <logger.h>
 
-#include <cvb/fdlist.h>
+#include <net.h>
 
 /*
  * Infinite timeout for the poll() function.
@@ -43,10 +44,11 @@ static void loop(int listener)
         struct fdlist fdl = FDLIST_INIT;
         struct pollfd *ifd;
         char buf[BUFSIZ];
+        int sfd;
         int ready;
 
-        if (fdl_add(&fdl, listener, POLLIN) < 0) {
-                log_fatal("fdl_add(): %s\n", strerror(errno));
+        if (fdl_add(&fdl, listener, POLLIN) != 0) {
+                log_fatal("fdl_add(): %s", strerror(errno));
                 exit(EXIT_FAILURE);
         }
 
@@ -54,18 +56,26 @@ static void loop(int listener)
                 ready = poll(fdl.fds, fdl.nfds, NO_TIMEOUT);
 
                 if (ready < 0) {
-                        log_fatal("poll(): %s\n", strerror(errno));
+                        log_fatal("poll(): %s", strerror(errno));
                         exit(EXIT_FAILURE);
                 }
 
                 /* TODO refactor */
                 for (ifd = fdl.fds; ready > 0; ++ifd) {
                         if (ifd->revents == POLLIN) {
-                                if (ifd->fd == listener)
-                                        fdl_add(&fdl, clnt_connect(ifd->fd), POLLIN);
-                                else {
-                                        if (read_msg(ifd->fd, buf, BUFSIZ) < 0)
-                                                fdl_remove(&fdl, ifd->fd);
+                                if (ifd->fd == listener) {
+                                        sfd = clnt_connect(ifd->fd);
+
+                                        if (sfd != -1)
+                                                fdl_add(&fdl, sfd, POLLIN);
+                                } else {
+                                        if (read_msg(ifd->fd, buf, BUFSIZ) > 0) {
+                                                printf("%s", buf);
+                                                fflush(stdout);
+                                        } else {
+                                                if (fdl_remove(&fdl, ifd->fd) != 0)
+                                                        log_warn("fdl_remove(): unable to remove %d from the list", ifd->fd);
+                                        }
                                 }
 
                                 --ready;
@@ -74,6 +84,7 @@ static void loop(int listener)
         }
 
         fdl_destroy(&fdl);
+        close(listener);
 }
 
 /*
@@ -87,15 +98,14 @@ int main(const int argc, const char *const argv[])
         /* TODO parse command line */
 
         if (argc != 2) {
-                log_fatal("Usage: %s port\n", argv[0]);
+                log_fatal("Usage: %s <service>", argv[0]);
                 exit(EXIT_FAILURE);
         }
 
         listener = fetch_socket(NULL, argv[1]);
+        log_info("Listening on port %s", argv[1]);
 
         loop(listener);
-
-        close(listener);
 
         return EXIT_SUCCESS;
 }

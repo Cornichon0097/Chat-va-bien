@@ -26,9 +26,9 @@ static int bind_socket(const struct addrinfo *rp)
 
                         if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
                                 return sfd;
-                }
 
-                close(sfd);
+                        close(sfd);
+                }
         }
 
         return -1;
@@ -47,9 +47,9 @@ static int connect_socket(const struct addrinfo *rp)
                 if (sfd >= 0) {
                         if (connect(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
                                 return sfd;
-                }
 
-                close(sfd);
+                        close(sfd);
+                }
         }
 
         return -1;
@@ -76,9 +76,9 @@ int fetch_socket(const char *const host, const char *const service)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_fatal("getaddrinfo(): %s\n", strerror(errno));
+                        log_fatal("getaddrinfo(): %s", strerror(errno));
                 else
-                        log_fatal("getaddrinfo(): %s\n", gai_strerror(rc));
+                        log_fatal("getaddrinfo(): %s", gai_strerror(rc));
 
                 exit(EXIT_FAILURE);
         }
@@ -87,13 +87,13 @@ int fetch_socket(const char *const host, const char *const service)
                 sfd = bind_socket(res);
 
                 if (listen(sfd, 10) != 0) {
-                        log_fatal("listen(): %s\n", strerror(errno));
+                        log_error("listen(): %s", strerror(errno));
                 }
         } else
                 sfd = connect_socket(res);
 
         if (sfd < 0) {
-               log_fatal("Failed to bind a socket\n");
+               log_fatal("Failed to bind a socket");
                exit(EXIT_FAILURE);
         }
 
@@ -116,7 +116,7 @@ int clnt_connect(const int listener)
         sfd = accept(listener, &addr, &addrlen);
 
         if (sfd < 0) {
-                log_error("accept(): %s\n", strerror(errno));
+                log_error("accept(): %s", strerror(errno));
                 return -1;
         }
 
@@ -125,36 +125,46 @@ int clnt_connect(const int listener)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_warn("getnameinfo(): %s\n", strerror(errno));
+                        log_warn("getnameinfo(): %s", strerror(errno));
                 else
-                        log_warn("getnameinfo(): %s\n", gai_strerror(rc));
+                        log_warn("getnameinfo(): %s", gai_strerror(rc));
         } else
-                log_info("New connection from %s:%s\n", host, service);
+                log_info("New connection from %s:%s", host, service);
 
         return sfd;
+}
+
+int send_msg(const int sfd, const void *const msg, const size_t size)
+{
+        int nsent;
+
+        nsent = send(sfd, msg, size, 0);
+
+        if (nsent < 0) {
+                log_error("send(): %s", strerror(errno));
+                return -1;
+        }
+
+        return nsent;
 }
 
 /*
  * Receive a message from a connected client.
  */
-int read_msg(const int sfd, char *const buf, const size_t size)
+int read_msg(const int sfd, void *const msg, const size_t size)
 {
         int nread;
 
-        nread = recv(sfd, buf, size, 0);
+        nread = recv(sfd, msg, size, 0);
 
-        if (nread <= 0) {
-                if (nread < 0)
-                        log_error("recv(): %s\n", strerror(errno));
-                else
-                        log_info("Client disconnected\n");
+        if (nread < 0)
+                log_error("recv(): %s", strerror(errno));
 
+        if (nread == 0) {
+                log_info("Client disconnected");
                 close(sfd);
-                return -1;
         }
-
-        buf[nread - 1] = '\0';
-        log_info("%d bytes received: %s\n", nread, buf);
 
         return nread;
 }
+
