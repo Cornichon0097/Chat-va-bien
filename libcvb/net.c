@@ -7,7 +7,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include <net.h>
+#include <cvb/net.h>
+
 #include <logger.h>
 
 /*

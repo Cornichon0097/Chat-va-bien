@@ -25,11 +25,10 @@
 #include <string.h>
 #include <errno.h>
 
+#include <cvb/net.h>
 #include <cvb/fdlist.h>
 
 #include <logger.h>
-
-#include <net.h>
 
 /*
  * Infinite timeout for the poll() function.

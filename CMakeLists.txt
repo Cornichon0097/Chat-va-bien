@@ -29,7 +29,8 @@ target_compile_options(compiler_flags INTERFACE
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/liblog)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libcvb)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cvb)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/srvr)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/clnt)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tests)
 
 if (BUILD_DOC)
