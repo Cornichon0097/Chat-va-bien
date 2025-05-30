@@ -1,5 +1,5 @@
-#ifndef NET_H
-#define NET_H
+#ifndef CVB_NET_H
+#define CVB_NET_H
 
 int fetch_socket(const char *host, const char *service);
 
@@ -9,4 +9,4 @@ int send_msg(int sfd, const void *msg, size_t size);
 
 int read_msg(int sfd, void *msg, size_t size);
 
-#endif /* net.h */
+#endif /* cvb/net.h */

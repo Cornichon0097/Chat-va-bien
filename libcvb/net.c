@@ -77,9 +77,9 @@ int fetch_socket(const char *const host, const char *const service)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_fatal("getaddrinfo(): %s", strerror(errno));
+                        log_fatal("[net] getaddrinfo(): %s", strerror(errno));
                 else
-                        log_fatal("getaddrinfo(): %s", gai_strerror(rc));
+                        log_fatal("[net] getaddrinfo(): %s", gai_strerror(rc));
 
                 exit(EXIT_FAILURE);
         }
@@ -88,15 +88,22 @@ int fetch_socket(const char *const host, const char *const service)
                 sfd = bind_socket(res);
 
                 if (listen(sfd, 10) != 0) {
-                        log_error("listen(): %s", strerror(errno));
+                        log_error("[net] listen(): %s", strerror(errno));
                 }
-        } else
+        } else {
+                log_debug("[net] Attempt connection to %s:%s", host, service);
                 sfd = connect_socket(res);
+        }
 
         if (sfd < 0) {
-               log_fatal("Failed to bind a socket");
+               log_fatal("[net] Failed to bind a socket");
                exit(EXIT_FAILURE);
         }
+
+        if (host == NULL)
+                log_info("[net] Listening on port %s", service);
+        else
+                log_info("[net] Successfuly connected to %s:%s", host, service);
 
         freeaddrinfo(res);
 
@@ -117,7 +124,7 @@ int clnt_connect(const int listener)
         sfd = accept(listener, &addr, &addrlen);
 
         if (sfd < 0) {
-                log_error("accept(): %s", strerror(errno));
+                log_error("[net] accept(): %s", strerror(errno));
                 return -1;
         }
 
@@ -126,11 +133,11 @@ int clnt_connect(const int listener)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_warn("getnameinfo(): %s", strerror(errno));
+                        log_warn("[net] getnameinfo(): %s", strerror(errno));
                 else
-                        log_warn("getnameinfo(): %s", gai_strerror(rc));
+                        log_warn("[net] getnameinfo(): %s", gai_strerror(rc));
         } else
-                log_info("New connection from %s:%s", host, service);
+                log_info("[net] New connection from %s:%s", host, service);
 
         return sfd;
 }
@@ -142,7 +149,7 @@ int send_msg(const int sfd, const void *const msg, const size_t size)
         nsent = send(sfd, msg, size, 0);
 
         if (nsent < 0) {
-                log_error("send(): %s", strerror(errno));
+                log_error("[net] send(): %s", strerror(errno));
                 return -1;
         }
 
@@ -159,10 +166,10 @@ int read_msg(const int sfd, void *const msg, const size_t size)
         nread = recv(sfd, msg, size, 0);
 
         if (nread < 0)
-                log_error("recv(): %s", strerror(errno));
+                log_error("[net] recv(): %s", strerror(errno));
 
         if (nread == 0) {
-                log_info("Client disconnected");
+                log_info("[net] Client disconnected");
                 close(sfd);
         }
 
