@@ -30,6 +30,8 @@
 
 #include <logger.h>
 
+#include <db.h>
+
 /*
  * Infinite timeout for the poll() function.
  */
@@ -91,6 +93,7 @@ static void loop(int listener)
  */
 int main(const int argc, const char *const argv[])
 {
+        struct db_connect *dbc;
         int listener;
 
         /* TODO better log system  */
@@ -101,9 +104,11 @@ int main(const int argc, const char *const argv[])
                 exit(EXIT_FAILURE);
         }
 
-        listener = fetch_socket(NULL, argv[1]);
-        log_info("Listening on port %s", argv[1]);
+        dbc = db_init(NULL);
+        db_find(dbc, "cornichon", NULL, 0);
+        db_close(&dbc);
 
+        listener = fetch_socket(NULL, argv[1]);
         loop(listener);
 
         return EXIT_SUCCESS;
