@@ -75,7 +75,7 @@ int db_insert(struct db_connect *const dbc, const char *const username,
                 return -1;
         }
 
-        log_info("[db] Inserted user %s", username);
+        log_debug("[db] Inserted user %s", username);
 
         bson_destroy(doc);
 
@@ -95,7 +95,7 @@ int db_update(struct db_connect *const dbc, const char *const username,
                 return -1;
         }
 
-        log_info("[db] Updated user %s", username);
+        log_debug("[db] Updated user %s", username);
 
         bson_destroy(update);
         bson_destroy(query);
@@ -127,7 +127,7 @@ int db_find(struct db_connect *const dbc, const char *const username,
                 return -1;
         }
 
-        log_info("[db] Found user %s", username);
+        log_debug("[db] Found user %s", username);
 
         mongoc_cursor_destroy(res);
         bson_destroy(filter);
@@ -145,7 +145,7 @@ int db_delete(struct db_connect *const dbc, const char *const username)
                 return -1;
         }
 
-        log_info("[db] Deleted user %s", username);
+        log_debug("[db] Deleted user %s", username);
 
         bson_destroy (filter);
 
@@ -160,6 +160,4 @@ void db_close(struct db_connect **const dbc)
 
         free(*dbc);
         *dbc = NULL;
-
-        log_info("[db] Connection closed");
 }
