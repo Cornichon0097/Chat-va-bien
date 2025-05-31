@@ -21,7 +21,9 @@
  * SOFTWARE.
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <errno.h>
 
@@ -30,62 +32,64 @@
 
 #include <logger.h>
 
+#include <srvr.h>
 #include <db.h>
 
-/*
- * Infinite timeout for the poll() function.
- */
-#define NO_TIMEOUT -1
+#define FILENAME "/tmp/cvb_srvr.log"
 
-/*
- * Server's main loop.
- */
-static void loop(int listener)
+static void cleanup(__attribute__((unused)) int status, void *arg)
 {
-        struct fdlist fdl = FDLIST_INIT;
-        struct pollfd *ifd;
-        char buf[BUFSIZ];
-        int sfd;
-        int ready;
+        struct srvr *srvr = (struct srvr *) arg;
 
-        if (fdl_add(&fdl, listener, POLLIN) != 0) {
-                log_fatal("fdl_add(): %s", strerror(errno));
-                exit(EXIT_FAILURE);
-        }
+        log_debug("[srvr] Cleaning up");
 
-        for (;;) {
-                ready = poll(fdl.fds, fdl.nfds, NO_TIMEOUT);
+        if (srvr->log != NULL)
+                fclose(srvr->log);
 
-                if (ready < 0) {
-                        log_fatal("poll(): %s", strerror(errno));
-                        exit(EXIT_FAILURE);
-                }
+        if (srvr->dbc != NULL)
+                db_close(&(srvr->dbc));
 
-                /* TODO refactor */
-                for (ifd = fdl.fds; ready > 0; ++ifd) {
-                        if (ifd->revents == POLLIN) {
-                                if (ifd->fd == listener) {
-                                        sfd = clnt_connect(ifd->fd);
+        if (srvr->fdl.fds != NULL)
+                fdl_destroy(&(srvr->fdl));
 
-                                        if (sfd != -1)
-                                                fdl_add(&fdl, sfd, POLLIN);
-                                } else {
-                                        if (read_msg(ifd->fd, buf, BUFSIZ) > 0) {
-                                                printf("%s", buf);
-                                                fflush(stdout);
-                                        } else {
-                                                if (fdl_remove(&fdl, ifd->fd) != 0)
-                                                        log_warn("fdl_remove(): unable to remove %d from the list", ifd->fd);
-                                        }
-                                }
+        if (srvr->listener > -1)
+                close(srvr->listener);
+}
 
-                                --ready;
-                        }
-                }
-        }
+static void handler(__attribute__((unused)) int signal)
+{
+        log_info("[srvr] Clean up and shut down");
+        exit(EXIT_SUCCESS);
+}
 
-        fdl_destroy(&fdl);
-        close(listener);
+static void usage(const char *const argv0)
+{
+        fprintf(stderr, "Usage: %s <port>\n", argv0);
+}
+
+static int set_handler(void)
+{
+        struct sigaction act;
+
+        log_debug("[srvr] Set signal handler");
+
+        act.sa_handler = &handler;
+        sigemptyset(&act.sa_mask);
+        act.sa_flags = 0;
+
+        return sigaction(SIGINT, &act, NULL);
+}
+
+static void set_logger(struct srvr *const srvr, const char *const pathname)
+{
+        srvr->log = fopen(pathname, "w");
+
+        if (srvr->log != NULL)
+                log_callback(&file_callback, srvr->log, LOG_DEBUG);
+        else
+                log_error("[srvr] Faile to open file %s", FILENAME);
+
+        log_debug("[srvr] Logging level set to %s", log_level(LOG_ERROR));
 }
 
 /*
@@ -93,23 +97,34 @@ static void loop(int listener)
  */
 int main(const int argc, const char *const argv[])
 {
-        struct db_connect *dbc;
-        int listener;
-
-        /* TODO better log system  */
-        /* TODO parse command line */
+        struct srvr srvr = {NULL, NULL, FDLIST_INIT, -1};
+        int rc;
 
         if (argc != 2) {
-                log_fatal("Usage: %s <service>", argv[0]);
+                usage(argv[0]);
                 exit(EXIT_FAILURE);
         }
 
-        dbc = db_init(NULL);
-        db_find(dbc, "cornichon", NULL, 0);
-        db_close(&dbc);
+        set_logger(&srvr, FILENAME);
 
-        listener = fetch_socket(NULL, argv[1]);
-        loop(listener);
+        rc = on_exit(&cleanup, &srvr);
+
+        if (rc != 0) {
+                log_fatal("[srvr] Failed to set exit function");
+                exit(EXIT_FAILURE);
+        }
+
+        rc = set_handler();
+
+        if (rc == -1) {
+                log_fatal("[srvr] sigaction(): %s", strerror(errno));
+                exit(EXIT_FAILURE);
+        }
+
+        srvr.dbc = db_init("mongodb://cornichon:vinaigre@localhost:27017/", DB_URI);
+        srvr.listener = fetch_socket(NULL, argv[1]);
+
+        loop(&srvr);
 
         return EXIT_SUCCESS;
 }
