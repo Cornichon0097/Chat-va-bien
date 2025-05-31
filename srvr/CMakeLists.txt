@@ -1,4 +1,4 @@
-add_executable(srvr start.c db.c)
+add_executable(srvr start.c srvr.c db.c)
 target_link_libraries(srvr PRIVATE cvb log compiler_flags)
 target_include_directories(srvr PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
