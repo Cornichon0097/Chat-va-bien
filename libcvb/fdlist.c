@@ -154,6 +154,12 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
  */
 void fdl_destroy(struct fdlist *const fdl)
 {
+        if (fdl == NULL)
+                return;
+
+        if (fdl->fds == NULL)
+                return;
+
         free(fdl->fds);
         fdl->fds = NULL;
         fdl->nfds = 0;
