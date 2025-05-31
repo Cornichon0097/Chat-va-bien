@@ -1,7 +1,10 @@
 #ifndef DB_H
 #define DB_H
 
-struct db_connect *db_init(const char *config);
+#define DB_URI 0x0
+#define BD_PATH 0x1
+
+struct db_connect *db_init(const void *config, int flag);
 
 int db_insert(struct db_connect *dbc, const char *user, const char *pwd);
 

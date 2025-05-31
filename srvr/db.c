@@ -9,8 +9,6 @@
 
 #include <db.h>
 
-#define DB_CONNECTION "mongodb://cornichon:vinaigre@localhost:27017/"
-
 #define DB_USER_FIELD "user"
 #define DB_PWD_FIELD "pwd"
 
@@ -19,10 +17,20 @@ struct db_connect {
         mongoc_collection_t *collec;
 };
 
-struct db_connect *db_init(__attribute__((unused)) const char *const config)
+static int db_build_uri(const void *const config, const int flag,
+                        char *const uri, const size_t size)
+{
+        if (flag == DB_URI)
+                strncpy(uri, config, size);
+
+        return 0;
+}
+
+struct db_connect *db_init(const void *const config, const int flag)
 {
         struct db_connect *dbc;
         bson_t *ping = NULL, reply = BSON_INITIALIZER;
+        char db_uri[BUFSIZ];
         bson_error_t err;
 
         dbc = (struct db_connect *) malloc(sizeof(struct db_connect));
@@ -32,10 +40,11 @@ struct db_connect *db_init(__attribute__((unused)) const char *const config)
                 exit(EXIT_FAILURE);
         }
 
-        log_debug("[db] Attempt connection to %s", DB_CONNECTION);
+        db_build_uri(config, flag, db_uri, BUFSIZ);
+        log_debug("[db] Attempt connection to %s", db_uri);
 
         mongoc_init();
-        dbc->clnt = mongoc_client_new(DB_CONNECTION);
+        dbc->clnt = mongoc_client_new(db_uri);
 
         ping = BCON_NEW("ping", BCON_INT32(1));
 
