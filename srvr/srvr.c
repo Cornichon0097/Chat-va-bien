@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include <cvb/net.h>
+#include <cvb/msg.h>
 #include <cvb/fdlist.h>
 
 #include <logger.h>
@@ -35,8 +36,23 @@ void auth_request(struct srvr *const srvr, const int sfd, const char flag)
 
         rc = db_find(srvr->dbc, user, buf, TEXT_MAX_SIZE);
 
-        if ((flag == REQUEST_NO_AUTH_CONNECT) && (rc == 0)) {
-                log_info("[srvr] User %s already exists", user);
+        if (rc == 0) {
+                log_debug("[srvr] User %s exists", user);
+
+                if (flag == REQUEST_AUTH_CONNECT) {
+                        /* strcmp(pwd); */
+                        log_info("[srvr] %s authentified", user);
+                } else /* if (flag == REQUEST_NO_AUTH_CONNECT) */ {
+                        log_info("[srvr] Auth request refuse");
+                }
+        } else {
+                log_debug("[srvr] User %s doesn't exist", user);
+
+                if (flag == REQUEST_AUTH_CONNECT) {
+                        log_info("[srvr] Auth request refuse");
+                } else /* if (flag == REQUEST_NO_AUTH_CONNECT) */ {
+                        log_info("[srvr] %s authentified", user);
+                }
         }
 }
 
