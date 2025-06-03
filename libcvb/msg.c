@@ -5,12 +5,14 @@
 
 #include <logger.h>
 
-#define LITTLE_ENDIAN endian.r == 1
+/* #define LITTLE_ENDIAN endian.r == 1
 
 static union check_endian {
         unsigned int value;
         char r;
-} endian = {.value = 1};
+} endian = {.value = 1}; */
+
+#define LITTLE_ENDIAN false
 
 int8_t read_code(const int sfd)
 {
@@ -41,7 +43,7 @@ short read_text(const int sfd, char *const text)
                 return -1;
         }
 
-        text[text_size] = '\0';
+        text[text_size - 1] = '\0';
 
         return text_size;
 }
