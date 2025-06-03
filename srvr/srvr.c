@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 
@@ -21,17 +22,6 @@
  */
 #define NO_TIMEOUT -1
 
-short extract_text(int sfd, char *const buf)
-{
-        short text_size;
-
-        read_msg(sfd, &text_size, sizeof(short));
-        read_msg(sfd, buf, text_size);
-        buf[text_size] = '\0';
-
-        return text_size;
-}
-
 void auth_request(struct srvr *const srvr, const int sfd, const char flag)
 {
         char user[TEXT_MAX_SIZE], pwd[TEXT_MAX_SIZE];
@@ -45,13 +35,14 @@ void auth_request(struct srvr *const srvr, const int sfd, const char flag)
 
         rc = db_find(srvr->dbc, user, buf, TEXT_MAX_SIZE);
 
-        if (rc == 0)
-                log_debug("[srvr] User %s exists", user);
+        if ((flag == REQUEST_NO_AUTH_CONNECT) && (rc == 0)) {
+                log_info("[srvr] User %s already exists", user);
+        }
 }
 
 void srvr_recv(struct srvr *const srvr, int sfd)
 {
-        char code;
+        int8_t code;
         int clnt;
 
         if (sfd == srvr->listener) {
@@ -62,7 +53,7 @@ void srvr_recv(struct srvr *const srvr, int sfd)
                 if (clnt != -1)
                         fdl_add(&(srvr->fdl), clnt, POLLIN);
         } else {
-                if (read_msg(sfd, &code, 1) > 0) {
+                if (read_msg(sfd, &code, sizeof(int8_t)) > 0) {
                         switch (code) {
                         case REQUEST_NO_AUTH_CONNECT:
                         case REQUEST_AUTH_CONNECT:
@@ -70,11 +61,14 @@ void srvr_recv(struct srvr *const srvr, int sfd)
                                 auth_request(srvr, sfd, code);
                                 break;
                         default:
-                                log_warn("[srvr] Unrecognized request");
+                                log_error("[srvr] Unrecognized request");
                                 break;
                         }
-                } else
+                } else {
+                        log_info("[srvr] Client disconnected");
                         fdl_remove(&(srvr->fdl), sfd);
+                        close(sfd);
+                }
         }
 
 }

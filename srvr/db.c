@@ -36,8 +36,8 @@ struct db_connect *db_init(const void *const config, const int flag)
         dbc = (struct db_connect *) malloc(sizeof(struct db_connect));
 
         if (dbc == NULL) {
-                log_fatal("[db] malloc(): %s", strerror(errno));
-                exit(EXIT_FAILURE);
+                log_error("[db] malloc(): %s", strerror(errno));
+                return NULL;
         }
 
         db_build_uri(config, flag, db_uri, BUFSIZ);
@@ -49,8 +49,8 @@ struct db_connect *db_init(const void *const config, const int flag)
         ping = BCON_NEW("ping", BCON_INT32(1));
 
         if (!mongoc_client_command_simple(dbc->clnt, "cvb", ping, NULL, &reply, &err)) {
-                log_fatal("[db] Connection failed: %s", err.message);
-                exit(EXIT_FAILURE);
+                log_error("[db] Connection failed: %s", err.message);
+                return NULL;
         }
 
         log_info("[db] Successfully connected as %s on %s", "cornichon", "cvb");
@@ -147,7 +147,7 @@ int db_delete(struct db_connect *const dbc, const char *const username)
 
         log_debug("[db] Deleted user %s", username);
 
-        bson_destroy (filter);
+        bson_destroy(filter);
 
         return 0;
 }

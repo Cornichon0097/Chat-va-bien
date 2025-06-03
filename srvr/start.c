@@ -41,8 +41,6 @@ static void cleanup(__attribute__((unused)) int status, void *arg)
 {
         struct srvr *srvr = (struct srvr *) arg;
 
-        log_debug("[srvr] Cleaning up");
-
         if (srvr->log != NULL)
                 fclose(srvr->log);
 
@@ -89,7 +87,7 @@ static void set_logger(struct srvr *const srvr, const char *const pathname)
         else
                 log_error("[srvr] Faile to open file %s", FILENAME);
 
-        log_debug("[srvr] Logging level set to %s", log_level(LOG_ERROR));
+        log_debug("[srvr] Logging level set to %s", log_level(LOG_WARN));
 }
 
 /*
@@ -122,7 +120,18 @@ int main(const int argc, const char *const argv[])
         }
 
         srvr.dbc = db_init("mongodb://cornichon:vinaigre@localhost:27017/", DB_URI);
+
+        if (srvr.dbc == NULL) {
+                log_fatal("[srvr] Failed to connect to database");
+                exit(EXIT_FAILURE);
+        }
+
         srvr.listener = fetch_socket(NULL, argv[1]);
+
+        if (srvr.listener == -1) {
+                log_fatal("[srvr] Failed to fetch a socket");
+                exit(EXIT_FAILURE);
+        }
 
         loop(&srvr);
 
