@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <byteswap.h>
 
 #include <cvb/net.h>
@@ -13,22 +12,46 @@ static union check_endian {
         char r;
 } endian = {.value = 1};
 
-short extract_text(const int sfd, char *const buf)
+int8_t read_code(const int sfd)
+{
+        int8_t code;
+
+        if (recv_msg(sfd, &code, sizeof(int8_t)) == -1) {
+                log_error("[msg] Failed to read code");
+                return -1;
+        }
+
+        return code;
+}
+
+short read_text(const int sfd, char *const text)
 {
         short text_size;
 
-        read_msg(sfd, &text_size, sizeof(short));
+        if (recv_msg(sfd, &text_size, sizeof(short)) == -1) {
+                log_error("[msg] Failed to read text size");
+                return -1;
+        }
 
         if (LITTLE_ENDIAN)
                 text_size = __bswap_16(text_size);
 
-        read_msg(sfd, buf, text_size);
-        buf[text_size] = '\0';
+        if (recv_msg(sfd, text, text_size) == -1) {
+                log_error("[msg] Failed to read text");
+                return -1;
+        }
+
+        text[text_size] = '\0';
 
         return text_size;
 }
 
-int write_text(const int sfd, const char *const buf, const short size)
+int write_code(const int sfd, const int8_t code)
+{
+        return send_msg(sfd, &code, sizeof(int8_t));
+}
+
+int write_text(const int sfd, const char *const text, const short size)
 {
         short text_size;
 
@@ -38,9 +61,9 @@ int write_text(const int sfd, const char *const buf, const short size)
                 text_size = size;
 
         if (send_msg(sfd, &text_size, sizeof(short)) == -1) {
-                log_error("[net] Failed to send message");
+                log_error("[net] Failed to write text");
                 return -1;
         }
 
-        return send_msg(sfd, buf, text_size);
+        return send_msg(sfd, text, text_size);
 }

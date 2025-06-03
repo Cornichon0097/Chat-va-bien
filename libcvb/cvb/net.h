@@ -25,6 +25,8 @@
 #ifndef CVB_NET_H
 #define CVB_NET_H
 
+#include <stddef.h>
+
 /**
  * \brief      Fetch a socket.
  *

@@ -13,8 +13,6 @@
 #include <srvr.h>
 #include <db.h>
 
-#define TEXT_MAX_SIZE 1024
-
 #define REQUEST_NO_AUTH_CONNECT 1
 #define REQUEST_AUTH_CONNECT 2
 
@@ -23,37 +21,15 @@
  */
 #define NO_TIMEOUT -1
 
-void auth_request(struct srvr *const srvr, const int sfd, const char flag)
+void auth_request(__attribute__((unused)) struct srvr *const srvr, const int sfd, __attribute__((unused)) const char flag)
 {
-        char user[TEXT_MAX_SIZE], pwd[TEXT_MAX_SIZE];
-        char buf[TEXT_MAX_SIZE];
-        int rc;
+        char buf[TEXT_SIZE];
+        short nread;
 
-        extract_text(sfd, user);
-
-        if (flag == REQUEST_AUTH_CONNECT)
-                extract_text(sfd, pwd);
-
-        rc = db_find(srvr->dbc, user, buf, TEXT_MAX_SIZE);
-
-        if (rc == 0) {
-                log_debug("[srvr] User %s exists", user);
-
-                if (flag == REQUEST_AUTH_CONNECT) {
-                        /* strcmp(pwd); */
-                        log_info("[srvr] %s authentified", user);
-                } else /* if (flag == REQUEST_NO_AUTH_CONNECT) */ {
-                        log_info("[srvr] Auth request refuse");
-                }
-        } else {
-                log_debug("[srvr] User %s doesn't exist", user);
-
-                if (flag == REQUEST_AUTH_CONNECT) {
-                        log_info("[srvr] Auth request refuse");
-                } else /* if (flag == REQUEST_NO_AUTH_CONNECT) */ {
-                        log_info("[srvr] %s authentified", user);
-                }
-        }
+        nread = read_text(sfd, buf);
+        printf("%s\n", buf);
+        write_code(sfd, 0);
+        write_text(sfd, buf, nread);
 }
 
 void srvr_recv(struct srvr *const srvr, int sfd)
@@ -64,12 +40,12 @@ void srvr_recv(struct srvr *const srvr, int sfd)
         if (sfd == srvr->listener) {
                 log_debug("[srvr] Received connection request");
 
-                clnt = clnt_connect(sfd);
+                clnt = clnt_accept(sfd);
 
                 if (clnt != -1)
                         fdl_add(&(srvr->fdl), clnt, POLLIN);
         } else {
-                if (read_msg(sfd, &code, sizeof(int8_t)) > 0) {
+                if (recv_msg(sfd, &code, sizeof(int8_t)) > 0) {
                         switch (code) {
                         case REQUEST_NO_AUTH_CONNECT:
                         case REQUEST_AUTH_CONNECT:
@@ -77,7 +53,7 @@ void srvr_recv(struct srvr *const srvr, int sfd)
                                 auth_request(srvr, sfd, code);
                                 break;
                         default:
-                                log_error("[srvr] Unrecognized request");
+                                log_error("[srvr] Unrecognized request %c", code);
                                 break;
                         }
                 } else {

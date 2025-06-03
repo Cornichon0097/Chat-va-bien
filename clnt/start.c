@@ -26,6 +26,7 @@
 #include <errno.h>
 
 #include <cvb/net.h>
+#include <cvb/msg.h>
 #include <cvb/fdlist.h>
 
 #include <logger.h>
@@ -43,7 +44,7 @@ static void loop(int server)
 {
         struct fdlist fdl = FDLIST_INIT;
         struct pollfd *ifd;
-        char buf[BUFSIZ];
+        char buf[TEXT_SIZE];
         int nread;
         int ready;
 
@@ -70,8 +71,14 @@ static void loop(int server)
                                 if (ifd->fd == STDIN_FILENO) {
                                         nread = read(STDIN_FILENO, buf, sizeof(buf));
 
-                                        if (nread > 0)
-                                                send_msg(server, buf, nread);
+                                        if (nread > 0) {
+                                                write_code(server, 1);
+                                                write_text(server, buf, nread);
+                                        }
+                                } else if (ifd->fd == server) {
+                                        read_code(server);
+                                        read_text(server, buf);
+                                        printf("%s\n", buf);
                                 }
 
                                 --ready;

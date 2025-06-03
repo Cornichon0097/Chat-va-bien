@@ -1,8 +1,16 @@
 #ifndef CVB_MSG_H
 #define CVB_MSG_H
 
-short extract_text(int sfd, char *buf);
+#include <stdint.h>
 
-int write_text(int sfd, const char *buf, short size);
+#define TEXT_SIZE 1024
+
+int8_t read_code(int sfd);
+
+short read_text(int sfd, char *text);
+
+int write_code(int sfd, int8_t code);
+
+int write_text(int sfd, const char *text, short size);
 
 #endif /* cvb/msg.h */
