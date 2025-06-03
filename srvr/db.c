@@ -115,6 +115,7 @@ int db_find(struct db_connect *const dbc, const char *const username,
         while (mongoc_cursor_next(res, &doc)) {
                 str = bson_as_canonical_extended_json(doc, NULL);
 
+                /* TODO */
                 if (password != NULL)
                         strncpy(password, str, size);
 
