@@ -30,7 +30,7 @@
  *
  * The \c fetch_socket() function tries to fetch a socket with the given
  * parameters \a host and \a service. If the \a host is NULL, then
- * \c fetch_socket() will return a socket suitable for \c clnt_connect().
+ * \c fetch_socket() will return a socket suitable for \c clnt_accept().
  * Otherwise, the socket will be \c connect()ed directly to the \a host.
  *
  * \param[in]  host     The host
@@ -43,7 +43,7 @@ int fetch_socket(const char *host, const char *service);
 /**
  * \brief      Accept a new client connection
  *
- * The \c clnt_connect() function tries to \c accept() a new connection request
+ * The \c clnt_accept() function tries to \c accept() a new connection request
  * from the listening socket \a listener and return the new connected socket.
  * The argument \a listener must be a socket that has been created with
  * \c fetch_socket().
@@ -54,7 +54,7 @@ int fetch_socket(const char *host, const char *service);
  *
  * \return     The new socket on success, -1 otherwise
  */
-int clnt_connect(int listener);
+int clnt_accept(int listener);
 
 /**
  * \brief      Send a message
@@ -71,9 +71,9 @@ int clnt_connect(int listener);
 int send_msg(int sfd, const void *msg, size_t size);
 
 /**
- * \brief      Read a message
+ * \brief      Received a message
  *
- * The \c read_msg() function reads up to \a size bytes from the socket \a sfd
+ * The \c recv_msg() function reads up to \a size bytes from the socket \a sfd
  * and stores them into the message \a msg.
  *
  * \param[in]  sfd   The socket
@@ -82,6 +82,6 @@ int send_msg(int sfd, const void *msg, size_t size);
  *
  * \return     the number of bytes read
  */
-int read_msg(int sfd, void *msg, size_t size);
+int recv_msg(int sfd, void *msg, size_t size);
 
 #endif /* cvb/net.h */
