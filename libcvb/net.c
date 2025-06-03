@@ -77,11 +77,11 @@ int fetch_socket(const char *const host, const char *const service)
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)
-                        log_fatal("[net] getaddrinfo(): %s", strerror(errno));
+                        log_error("[net] getaddrinfo(): %s", strerror(errno));
                 else
-                        log_fatal("[net] getaddrinfo(): %s", gai_strerror(rc));
+                        log_error("[net] getaddrinfo(): %s", gai_strerror(rc));
 
-                exit(EXIT_FAILURE);
+                return -1;
         }
 
         if (host == NULL) {
@@ -96,8 +96,8 @@ int fetch_socket(const char *const host, const char *const service)
         }
 
         if (sfd < 0) {
-               log_fatal("[net] Failed to bind a socket");
-               exit(EXIT_FAILURE);
+               log_error("[net] Failed to bind a socket");
+               return -1;
         }
 
         if (host == NULL)
@@ -148,10 +148,8 @@ int send_msg(const int sfd, const void *const msg, const size_t size)
 
         nsent = send(sfd, msg, size, 0);
 
-        if (nsent < 0) {
+        if (nsent == -1)
                 log_error("[net] send(): %s", strerror(errno));
-                return -1;
-        }
 
         return nsent;
 }
@@ -165,14 +163,8 @@ int read_msg(const int sfd, void *const msg, const size_t size)
 
         nread = recv(sfd, msg, size, 0);
 
-        if (nread < 0)
+        if (nread == -1)
                 log_error("[net] recv(): %s", strerror(errno));
-
-        if (nread == 0) {
-                log_info("[net] Client disconnected");
-                close(sfd);
-        }
 
         return nread;
 }
-
