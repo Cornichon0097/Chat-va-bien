@@ -1,0 +1,13 @@
+{
+    "username": "cornichon",
+    "password": "vinaigre",
+
+    "hostname": "localhost",
+    "port": "27017",
+
+    "dbname": "cvb",
+
+    "options": {
+        ""
+    }
+}
