@@ -33,9 +33,7 @@
 #include <stdbool.h>
 
 /**
- * \brief      Logging event
- *
- * A structure for logging events.
+ * \brief      Logging event structure.
  */
 struct log_event {
         void *udata;      /**< The log output        */
@@ -48,25 +46,21 @@ struct log_event {
 };
 
 /**
- * \brief      Logging function type
- *
- * A type definition for logging functions for callbacks.
+ * \brief      Logging function type.
  *
  * \see        log_callback()
  */
 typedef void (*log_fn_t)(struct log_event *);
 
 /**
- * \brief      Lock function type
- *
- * A type definition for lock functions.
+ * \brief      Lock function type.
  *
  * \see        log_locker()
  */
 typedef void (*log_lock_t)(bool, void *);
 
 /**
- * \brief      Logging levels
+ * \brief      Logging levels.
  *
  * An enumeration type of all logging levels available.
  *
@@ -75,7 +69,7 @@ typedef void (*log_lock_t)(bool, void *);
 enum {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL};
 
 /**
- * \brief      Debug level logging function
+ * \brief      Debug level logging function.
  *
  * Debug logging level. Use it for detailed information, typically only of
  * interest to a developer trying to diagnose a problem.
@@ -83,14 +77,14 @@ enum {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL};
 #define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * \brief      Info level logging function
+ * \brief      Info level logging function.
  *
  * Info logging level. Use it to confirm that things are working as expected.
  */
 #define log_info(...) log_log(LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * \brief      Warning level logging function
+ * \brief      Warning level logging function.
  *
  * Warning logging level. Use it when something unexpected happened, or that a
  * problem might occur in the near future (e.g. ‘disk space low’). The software
@@ -99,7 +93,7 @@ enum {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL};
 #define log_warn(...) log_log(LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * \brief      Error level logging function
+ * \brief      Error level logging function.
  *
  * Error logging level. Use it when the software has not been able to perform
  * some function due to a more serious problem.
@@ -107,7 +101,7 @@ enum {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL};
 #define log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 
 /*
- * \brief      Fatal level logging function
+ * \brief      Fatal level logging function.
  *
  * Fatal logging level. Use it for a serious error, indicating that the program
  * itself may be unable to continue running.
@@ -115,32 +109,23 @@ enum {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL};
 #define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * \brief      Enable or disable quiet mode
+ * \brief      Enables or disables quiet mode.
  *
- * The log_quiet() function enables or disables the logger quiet mode.
- *
- * \param[in]  enable  Enable or disable quiet mode
+ * \param[in]  enable  Quiet mode status
  */
 void log_quiet(bool enable);
 
 /**
- * \brief      Set the logging level
- *
- * The log_level() function sets the threshold of the logger. Logging messages
- * which are less severe than the logging level will be ignored.
+ * \brief      Sets the logging level.
  *
  * \param[in]  level  The logging level
  *
- * \return     The logging level as a string
+ * \return     The logging level as a string.
  */
 const char *log_level(int level);
 
 /**
- * \brief      Set a locker for the logger output
- *
- * The log_locker() function sets a locker for the logger and change the output.
- * If the lock function is NULL, no lock will be performed before logging
- * messages.
+ * \brief      Sets a locker for the logger output.
  *
  * \param[in]  fn     The lock function
  * \param[in]  udata  The logger output
@@ -148,43 +133,32 @@ const char *log_level(int level);
 void log_locker(log_lock_t fn, void *udata);
 
 /**
- * \brief      Add a callback
- *
- * The log_callback() function add a callback to the logger. Each time a log is
- * performed, and if the callback severity is equal to or higher than the logger
- * threshold, the same logging message is written in the callback output.
+ * \brief      Adds a callback.
  *
  * \param[in]  fn     The callbback logging function
  * \param[in]  udata  The callbback output
  * \param[in]  level  The callbback logging level
  *
- * \return     0 on success, -1 otherwise
+ * \return     0 on success, -1 otherwise.
  */
 int log_callback(log_fn_t fn, void *udata, int level);
 
 /**
- * \brief      Log a message on stdout
- *
- * The stdout_callpack() function logs a message on stdout. The main difference
- * with file_callback is that stdout allows to use colors in logging messages.
+ * \brief      Logs a message on stdout.
  *
  * \param[in]  ev    The logging event
  */
 void stdout_callback(struct log_event *ev);
 
 /**
- * \brief      Log a message in a file
- *
- * The file_callback() function logs a message in a file.
+ * \brief      Logs a message in a file.
  *
  * \param[in]  ev    The logging event
  */
 void file_callback(struct log_event *ev);
 
 /**
- * \brief      Log a message
- *
- * The log_log() function logs a message.
+ * \brief      Logs a message.
  *
  * \param[in]  level      The logging level
  * \param[in]  file       The current file

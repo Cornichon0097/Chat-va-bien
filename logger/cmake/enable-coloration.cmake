@@ -1,0 +1,1 @@
+add_compile_definitions(LOGGER_USE_COLOR)

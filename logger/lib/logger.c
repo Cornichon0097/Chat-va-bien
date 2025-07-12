@@ -30,16 +30,14 @@
 #include "logger.h"
 
 /**
- * \brief      Maximum callbacks
+ * \brief      Maximum callbacks.
  *
  * The maximum amount of callbacks allowed for the logger.
  */
 #define MAX_CALLBACKS 32
 
 /**
- * \brief      Callback
- *
- * A structure for the callbacks.
+ * \brief      Callback structure.
  */
 struct callback {
         log_fn_t fn; /**< The callback function */
@@ -48,9 +46,7 @@ struct callback {
 };
 
 /**
- * \brief      Logger
- *
- * A structure for the logger.
+ * \brief      The logger.
  */
 static struct {
         void *udata;                              /**< The output        */
@@ -61,19 +57,15 @@ static struct {
 } logger;
 
 /**
- * \brief      Logging level strings
- *
- * An array of all logging levels as strings.
+ * \brief      Logging level strings.
  */
 static const char *const level_strings[] = {
         "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
 };
 
-#ifdef LOG_USE_COLOR
+#ifdef LOGGER_USE_COLOR
 /**
- * \brief      Logging level colors
- *
- * An array of all logging levels as colors.
+ * \brief      Logging level colors.
  */
 static const char *const level_colors[] = {
         "\x1b[96m", "\x1b[92m", "\x1b[93m", "\x1b[91m", "\x1b[95m"
@@ -81,7 +73,7 @@ static const char *const level_colors[] = {
 #endif
 
 /**
- * \brief      Set a logging event
+ * \brief      Sets a logging event.
  *
  * The set_log_event() function sets a logging event with the current time and
  * the message output.
@@ -100,7 +92,7 @@ static void set_log_event(struct log_event *const ev, void *const udata)
 }
 
 /**
- * \brief      Lock the logger output
+ * \brief      Locks the logger output.
  *
  * The log_lock() function locks the logger output before logging if a lock
  * function has been set with log_locker().
@@ -114,7 +106,7 @@ static void log_lock(void)
 }
 
 /**
- * \brief      Unlock the logger output
+ * \brief      Unlocks the logger output.
  *
  * The log_unlock() function unlocks the logger output previously locked by
  * log_lock().
@@ -128,11 +120,13 @@ static void log_unlock(void)
 }
 
 /**
- * \brief      Enable or disable quiet mode
+ * \brief      Enables or disables quiet mode.
  *
- * The log_quiet() function enables or disables the logger quiet mode.
+ * The log_quiet() function enables or disables the logger quiet mode. When
+ * enabled, no log on stdout will be performed. However, all callbacks are
+ * executed.
  *
- * \param[in]  enable  Enable or disable quiet mode
+ * \param[in]  enable  Quiet mode status
  */
 void log_quiet(const bool enable)
 {
@@ -140,14 +134,14 @@ void log_quiet(const bool enable)
 }
 
 /**
- * \brief      Set the logging level
+ * \brief      Sets the logging level.
  *
  * The log_level() function sets the threshold of the logger. Logging messages
  * which are less severe than the logging level will be ignored.
  *
  * \param[in]  level  The logging level
  *
- * \return     The logging level as a string
+ * \return     The logging level as a string.
  */
 const char *log_level(const int level)
 {
@@ -157,7 +151,7 @@ const char *log_level(const int level)
 }
 
 /**
- * \brief      Set a locker for the logger output
+ * \brief      Sets a locker for the logger output.
  *
  * The log_locker() function sets a locker for the logger and change the output.
  * If the lock function is NULL, no lock will be performed before logging
@@ -173,9 +167,9 @@ void log_locker(log_lock_t fn, void *const udata)
 }
 
 /**
- * \brief      Add a callback
+ * \brief      Adds a callback.
  *
- * The log_callback() function add a callback to the logger. Each time a log is
+ * The log_callback() function adds a callback to the logger. Each time a log is
  * performed, and if the callback severity is equal to or higher than the logger
  * threshold, the same logging message is written in the callback output.
  *
@@ -183,7 +177,7 @@ void log_locker(log_lock_t fn, void *const udata)
  * \param[in]  udata  The callbback output
  * \param[in]  level  The callbback logging level
  *
- * \return     0 on success, -1 otherwise
+ * \return     0 on success, -1 otherwise.
  */
 int log_callback(log_fn_t fn, void *const udata, const int level)
 {
@@ -203,10 +197,11 @@ int log_callback(log_fn_t fn, void *const udata, const int level)
 }
 
 /**
- * \brief      Log a message on stdout
+ * \brief      Logs a message on stdout.
  *
  * The stdout_callpack() function logs a message on stdout. The main difference
- * with file_callback is that stdout allows to use colors in logging messages.
+ * with file_callback() function is that stdout allows to use colors in logging
+ * messages.
  *
  * \param[in]  ev    The logging event
  */
@@ -216,7 +211,7 @@ void stdout_callback(struct log_event *const ev)
 
         buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 
-#ifdef LOG_USE_COLOR
+#ifdef LOGGER_USE_COLOR
         fprintf(ev->udata, "%s %s%-5s\x1b[0m \x1b[90m%s:%d:\x1b[0m ",
                 buf, level_colors[ev->level], level_strings[ev->level],
                 ev->file, ev->line);
@@ -231,9 +226,7 @@ void stdout_callback(struct log_event *const ev)
 }
 
 /**
- * \brief      Log a message in a file
- *
- * The file_callback() function logs a message in a file.
+ * \brief      Logs a message in a file.
  *
  * \param[in]  ev    The logging event
  */
@@ -252,9 +245,7 @@ void file_callback(struct log_event *const ev)
 }
 
 /**
- * \brief      Log a message
- *
- * The log_log() function logs a message.
+ * \brief      Logs a message.
  *
  * \param[in]  level      The logging level
  * \param[in]  file       The current file

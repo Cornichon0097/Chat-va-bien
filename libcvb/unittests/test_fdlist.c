@@ -9,8 +9,6 @@ int main(void)
 {
         struct fdlist fdl = FDLIST_INIT;
 
-        printf("Running tests...\n");
-
         assert(fdl_add(&fdl, 0, 0) == 0);
         assert(fdl.nfds == 1);
 
@@ -34,8 +32,6 @@ int main(void)
         fdl_destroy(&fdl);
         assert(fdl.fds == NULL);
         assert(fdl.nfds == 0);
-
-        printf("OK\n");
 
         return EXIT_SUCCESS;
 }
