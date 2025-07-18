@@ -25,8 +25,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef CVB_LOGGER_H
+#define CVB_LOGGER_H
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -109,7 +109,11 @@ enum {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL};
 #define log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
- * \brief      Enables or disables quiet mode.
+ * \brief      Enables quiet mode.
+ *
+ * The log_quiet() function enables or disables the logger quiet mode. When
+ * enabled, no log on stdout will be performed. However, all callbacks are
+ * executed.
  *
  * \param[in]  enable  Quiet mode status
  */
@@ -117,6 +121,9 @@ void log_quiet(bool enable);
 
 /**
  * \brief      Sets the logging level.
+ *
+ * The log_level() function sets the threshold of the logger. Logging messages
+ * which are less severe than the logging level will be ignored.
  *
  * \param[in]  level  The logging level
  *
@@ -127,6 +134,10 @@ const char *log_level(int level);
 /**
  * \brief      Sets a locker for the logger output.
  *
+ * The log_locker() function sets a locker for the logger and change the output.
+ * If the lock function is NULL, no lock will be performed before logging
+ * messages.
+ *
  * \param[in]  fn     The lock function
  * \param[in]  udata  The logger output
  */
@@ -134,6 +145,10 @@ void log_locker(log_lock_t fn, void *udata);
 
 /**
  * \brief      Adds a callback.
+ *
+ * The log_callback() function adds a callback to the logger. Each time a log is
+ * performed, and if the callback severity is equal to or higher than the logger
+ * threshold, the same logging message is written in the callback output.
  *
  * \param[in]  fn     The callbback logging function
  * \param[in]  udata  The callbback output
@@ -145,6 +160,10 @@ int log_callback(log_fn_t fn, void *udata, int level);
 
 /**
  * \brief      Logs a message on stdout.
+ *
+ * The stdout_callpack() function logs a message on stdout. The main difference
+ * with file_callback() function is that stdout allows to use colors in logging
+ * messages.
  *
  * \param[in]  ev    The logging event
  */
@@ -168,4 +187,4 @@ void file_callback(struct log_event *ev);
  */
 void log_log(int level, const char *file, int line, const char *fmt, ...);
 
-#endif /* logger.h */
+#endif /* cvb/logger.h */

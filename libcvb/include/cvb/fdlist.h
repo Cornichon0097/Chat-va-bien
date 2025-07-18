@@ -1,5 +1,5 @@
 /**
- * \file       fdlist.c
+ * \file       fdlist.h
  * \brief      Functions dealing with file descriptors lists.
  *
  * Copyright (c) 2025 Antoni Blanche
@@ -28,14 +28,12 @@
 #include <poll.h>
 
 /**
- * \brief      List initialiser
- *
- * An initialiser for a file descriptors list.
+ * \brief      List initializer.
  */
 #define FDLIST_INIT {NULL, 0, 0}
 
 /**
- * \brief      File descriptors list
+ * \brief      File descriptors list.
  *
  * A structure for a list of <tt>struct pollfd<tt> with a dynamic size.
  */
@@ -46,7 +44,7 @@ struct fdlist {
 };
 
 /**
- * \brief      Add a file descriptor
+ * \brief      Adds a file descriptor.
  *
  * The \c fdl_add() function adds the file descriptor \a fd at the end of the
  * file descriptor list \a fdl.
@@ -55,12 +53,12 @@ struct fdlist {
  * \param[in]  fd      The file descriptor to add
  * \param[in]  events  The requested events
  *
- * \return     0 on success, -1 otherwise
+ * \return     0 on success, -1 otherwise.
  */
 int fdl_add(struct fdlist *fdl, int fd, short events);
 
 /**
- * \brief      Access a file descriptor
+ * \brief      Gets a file descriptor.
  *
  * The \c dl_get() function returns the first occurence of \a fd in the file
  * descriptors list \a fdl as a <tt>pollfd struct<tt>. If \a fd is not found in
@@ -70,12 +68,12 @@ int fdl_add(struct fdlist *fdl, int fd, short events);
  * \param[in]  fdl   The file descriptors list
  * \param[in]  fd    The file descriptor wanted
  *
- * \return     The <tt>struct pollfd<tt> of \a fd
+ * \return     The <tt>struct pollfd<tt> of \a fd.
  */
 struct pollfd *fdl_get(const struct fdlist *fdl, int fd);
 
 /**
- * \brief      Remove a file descriptor
+ * \brief      Removes a file descriptor.
  *
  * The \c fdl_remove() function removes the first occurence of \a fd in the file
  * descriptors list \a fdl. After removing an element, \c fdl_remove() moves to
@@ -86,17 +84,17 @@ struct pollfd *fdl_get(const struct fdlist *fdl, int fd);
  * \param      fdl   The file descriptors list
  * \param[in]  fd    The file descriptor to remove
  *
- * \return     0 on success, -1 otherwise
+ * \return     0 on success, -1 otherwise.
  */
 int fdl_remove(struct fdlist *fdl, int fd);
 
 /**
- * \brief      Destroy a file descriptors list
+ * \brief      Destroys a file descriptors list.
  *
  * The \c fdl_destroy() removes all the content of the file descriptoors list
  * \a fdl and free the allocated memory.
  *
- * \param      fdl   The file descriptors list
+ * \param      fdl   The file descriptors list.
  */
 void fdl_destroy(struct fdlist *fdl);
 

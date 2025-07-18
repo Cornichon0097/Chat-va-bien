@@ -11,5 +11,7 @@ include(CTest)
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
+
 add_subdirectory(libcvb)
 # add_subdirectory(cvbsh)

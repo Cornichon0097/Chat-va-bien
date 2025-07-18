@@ -120,7 +120,7 @@ static void log_unlock(void)
 }
 
 /**
- * \brief      Enables or disables quiet mode.
+ * \brief      Enables quiet mode.
  *
  * The log_quiet() function enables or disables the logger quiet mode. When
  * enabled, no log on stdout will be performed. However, all callbacks are
