@@ -31,9 +31,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+#include <cvb/logger.h>
 #include <cvb/net.h>
-
-#include <logger.h>
 
 /**
  * \brief      Bind a socket

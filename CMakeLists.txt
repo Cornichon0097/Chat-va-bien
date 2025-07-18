@@ -7,13 +7,9 @@ project(chat-va-bien
         LANGUAGES C)
 
 include(CTest)
-include(cmake/build-type.cmake)
 
 set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_compile_options(-O0 -Wall -Wextra -Werror -g)
-
-add_subdirectory(logger)
 add_subdirectory(libcvb)
 # add_subdirectory(cvbsh)

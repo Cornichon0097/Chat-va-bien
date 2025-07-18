@@ -1,9 +1,8 @@
 #include <byteswap.h>
 
+#include <cvb/logger.h>
 #include <cvb/net.h>
 #include <cvb/msg.h>
-
-#include <logger.h>
 
 /* #define LITTLE_ENDIAN endian.r == 1
 
@@ -57,6 +56,7 @@ int write_text(const int sfd, const char *const text, const short size)
 {
         short text_size;
 
+        /* TODO: use htons() instead */
         if (LITTLE_ENDIAN)
                 text_size = __bswap_16(size);
         else
