@@ -35,14 +35,14 @@
 #include <cvb/net.h>
 
 /**
- * \brief      Bind a socket
+ * \brief      Binds a socket.
  *
  * The \c bind_socket() function tries to \c bind() each socket provided by
  * the address list \a rp until success.
  *
  * \param[in]  rp    The address list
  *
- * \return     The binded socket
+ * \return     The binded socket.
  */
 static int bind_socket(const struct addrinfo *rp)
 {
@@ -66,14 +66,14 @@ static int bind_socket(const struct addrinfo *rp)
 }
 
 /**
- * \brief      Connect a socket
+ * \brief      Connects a socket.
  *
  * The \c connect_socket() function tries to \c connect() each socket provided
  * by the address list \a rp until success.
  *
  * \param[in]  rp    The address list
  *
- * \return     The Connected socket
+ * \return     The Connected socket.
  */
 static int connect_socket(const struct addrinfo *rp)
 {
@@ -94,7 +94,7 @@ static int connect_socket(const struct addrinfo *rp)
 }
 
 /**
- * \brief      Fetch a socket.
+ * \brief      Fetches a socket.
  *
  * The \c fetch_socket() function tries to fetch a socket with the given
  * parameters \a host and \a service. If the \a host is NULL, then
@@ -104,7 +104,7 @@ static int connect_socket(const struct addrinfo *rp)
  * \param[in]  host     The host
  * \param[in]  service  The service
  *
- * \return     The fetched socket
+ * \return     The fetched socket.
  */
 int fetch_socket(const char *const host, const char *const service)
 {
@@ -158,7 +158,7 @@ int fetch_socket(const char *const host, const char *const service)
 }
 
 /**
- * \brief      Accept a new client connection
+ * \brief      Accepts a new client connection.
  *
  * The \c clnt_accept() function tries to \c accept() a new connection request
  * from the listening socket \a listener and return the new connected socket.
@@ -169,7 +169,7 @@ int fetch_socket(const char *const host, const char *const service)
  *
  * \param[in]  listener  The listening socket
  *
- * \return     The new socket on success, -1 otherwise
+ * \return     The new socket on success, -1 otherwise.
  */
 int clnt_accept(const int listener)
 {
@@ -201,7 +201,7 @@ int clnt_accept(const int listener)
 }
 
 /**
- * \brief      Send a message
+ * \brief      Sends a message.
  *
  * The \c send_msg() function sends up to \a size bytes from the message \a msg
  * to the socket \a sfd.
@@ -210,7 +210,7 @@ int clnt_accept(const int listener)
  * \param[in]  msg   The message
  * \param[in]  size  The message size
  *
- * \return     the number of bytes written
+ * \return     the number of bytes written.
  */
 int send_msg(const int sfd, const void *const msg, const size_t size)
 {
@@ -225,7 +225,7 @@ int send_msg(const int sfd, const void *const msg, const size_t size)
 }
 
 /**
- * \brief      Received a message
+ * \brief      Receives a message.
  *
  * The \c recv_msg() function reads up to \a size bytes from the socket \a sfd
  * and stores them into the message \a msg.
@@ -234,7 +234,7 @@ int send_msg(const int sfd, const void *const msg, const size_t size)
  * \param[out] msg   The message
  * \param[in]  size  The message size
  *
- * \return     the number of bytes read
+ * \return     the number of bytes read.
  */
 int recv_msg(const int sfd, void *const msg, const size_t size)
 {

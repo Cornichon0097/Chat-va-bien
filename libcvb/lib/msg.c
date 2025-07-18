@@ -1,17 +1,8 @@
-#include <byteswap.h>
+#include <arpa/inet.h>
 
 #include <cvb/logger.h>
 #include <cvb/net.h>
 #include <cvb/msg.h>
-
-/* #define LITTLE_ENDIAN endian.r == 1
-
-static union check_endian {
-        unsigned int value;
-        char r;
-} endian = {.value = 1}; */
-
-#define LITTLE_ENDIAN false
 
 int8_t read_code(const int sfd)
 {
@@ -34,8 +25,7 @@ short read_text(const int sfd, char *const text)
                 return -1;
         }
 
-        if (LITTLE_ENDIAN)
-                text_size = __bswap_16(text_size);
+        text_size = ntohs(text_size);
 
         if (recv_msg(sfd, text, text_size) == -1) {
                 log_error("[msg] Failed to read text");
@@ -54,13 +44,7 @@ int write_code(const int sfd, const int8_t code)
 
 int write_text(const int sfd, const char *const text, const short size)
 {
-        short text_size;
-
-        /* TODO: use htons() instead */
-        if (LITTLE_ENDIAN)
-                text_size = __bswap_16(size);
-        else
-                text_size = size;
+        short text_size = htons(size);
 
         if (send_msg(sfd, &text_size, sizeof(short)) == -1) {
                 log_error("[net] Failed to write text");

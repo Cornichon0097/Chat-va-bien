@@ -1,6 +1,6 @@
 /**
  * \file       net.h
- * \brief      Functions dealing with network connections
+ * \brief      Functions dealing with network connections.
  *
  * Copyright (c) 2025 Antoni Blanche
  *
@@ -28,7 +28,7 @@
 #include <stddef.h>
 
 /**
- * \brief      Fetch a socket.
+ * \brief      Fetches a socket.
  *
  * The \c fetch_socket() function tries to fetch a socket with the given
  * parameters \a host and \a service. If the \a host is NULL, then
@@ -38,12 +38,12 @@
  * \param[in]  host     The host
  * \param[in]  service  The service
  *
- * \return     The fetched socket
+ * \return     The fetched socket.
  */
 int fetch_socket(const char *host, const char *service);
 
 /**
- * \brief      Accept a new client connection
+ * \brief      Accepts a new client connection.
  *
  * The \c clnt_accept() function tries to \c accept() a new connection request
  * from the listening socket \a listener and return the new connected socket.
@@ -54,12 +54,12 @@ int fetch_socket(const char *host, const char *service);
  *
  * \param[in]  listener  The listening socket
  *
- * \return     The new socket on success, -1 otherwise
+ * \return     The new socket on success, -1 otherwise.
  */
 int clnt_accept(int listener);
 
 /**
- * \brief      Send a message
+ * \brief      Sends a message.
  *
  * The \c send_msg() function sends up to \a size bytes from the message \a msg
  * to the socket \a sfd.
@@ -68,12 +68,12 @@ int clnt_accept(int listener);
  * \param[in]  msg   The message
  * \param[in]  size  The message size
  *
- * \return     the number of bytes written
+ * \return     the number of bytes written.
  */
 int send_msg(int sfd, const void *msg, size_t size);
 
 /**
- * \brief      Received a message
+ * \brief      Receives a message.
  *
  * The \c recv_msg() function reads up to \a size bytes from the socket \a sfd
  * and stores them into the message \a msg.
@@ -82,7 +82,7 @@ int send_msg(int sfd, const void *msg, size_t size);
  * \param[out] msg   The message
  * \param[in]  size  The message size
  *
- * \return     the number of bytes read
+ * \return     the number of bytes read.
  */
 int recv_msg(int sfd, void *msg, size_t size);
 

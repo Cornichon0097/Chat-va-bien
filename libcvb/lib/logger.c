@@ -27,7 +27,7 @@
  */
 #include <time.h>
 
-#include "cvb/logger.h"
+#include <cvb/logger.h>
 
 /**
  * \brief      Maximum callbacks.
