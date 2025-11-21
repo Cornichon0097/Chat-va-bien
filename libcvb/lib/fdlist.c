@@ -30,7 +30,7 @@
 /**
  * \brief      Default file descriptors list size.
  */
-#define DEFAULT_SIZE 10
+#define DEFAULT_SIZE 16
 
 /**
  * \brief      Performs a left shift.
@@ -41,13 +41,13 @@
  * \param      fdl    The file descriptors list
  * \param[in]  start  The first element to move
  */
-static void _fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
+/* static void _fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
 {
         nfds_t i;
 
         for (i = start; i < fdl->nfds - 1; ++i)
                 fdl->fds[i] = fdl->fds[i + 1];
-}
+} */
 
 /**
  * \brief      Adds a file descriptor.
@@ -63,17 +63,26 @@ static void _fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
  */
 int fdl_add(struct fdlist *const fdl, const int fd, const short events)
 {
+        nfds_t i;
+
         assert(fdl != NULL);
 
-        if (fdl->nfds >= fdl->size) {
-                fdl->fds = (struct pollfd *) realloc(fdl->fds,
-                                                     (fdl->size + DEFAULT_SIZE)
+        for (i = 0; i < fdl->nfds; ++i) {
+                if (fdl->fds[i].fd == -1) {
+                        fdl->fds[i].fd = fd;
+                        fdl->fds[i].events = events;
+
+                        return 0;
+                }
+        }
+
+        if (i >= fdl->size) {
+                fdl->size = fdl->size + DEFAULT_SIZE;
+                fdl->fds = (struct pollfd *) realloc(fdl->fds, (fdl->size)
                                                      * sizeof(struct pollfd));
 
                 if (fdl->fds == NULL)
                         return -1;
-
-                fdl->size = fdl->size + DEFAULT_SIZE;
         }
 
         fdl->fds[fdl->nfds].fd = fd;
@@ -88,8 +97,8 @@ int fdl_add(struct fdlist *const fdl, const int fd, const short events)
  *
  * The \c dl_get() function returns the first occurence of \a fd in the file
  * descriptors list \a fdl as a <tt>struct pollfd<tt>. If \a fd is not found in
- * \a fdl, then \c fdl_get() returns NULL.If there are other occurrences of
- * \a fd left in \a fdl, they are ignored.
+ * \a fdl, or if \a fd is negative, then \c fdl_get() returns NULL.If there are
+ * other occurrences of \a fd left in \a fdl, they are ignored.
  *
  * \param[in]  fdl   The file descriptors list
  * \param[in]  fd    The file descriptor wanted
@@ -101,6 +110,9 @@ struct pollfd *fdl_get(const struct fdlist *const fdl, const int fd)
         nfds_t i;
 
         assert(fdl != NULL);
+
+        if (fd < 0)
+                return NULL;
 
         for (i = 0; i < fdl->nfds; ++i) {
                 if (fdl->fds[i].fd == fd)
@@ -130,10 +142,13 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
 
         assert(fdl != NULL);
 
+        if (fd < 0)
+                return -1;
+
         for (i = 0; i < fdl->nfds; ++i) {
                 if (fdl->fds[i].fd == fd) {
-                        _fdl_shift_left(fdl, i);
-                        --fdl->nfds;
+                        fdl->fds[i].fd = -1;
+
                         return 0;
                 }
         }

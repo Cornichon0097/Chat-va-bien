@@ -1,9 +1,9 @@
 add_library(cvb
     SHARED
-    logger.c
-    net.c
     fdlist.c
-    msg.c)
+    logger.c
+    msg.c
+    net.c)
 
 target_include_directories(cvb
     PUBLIC

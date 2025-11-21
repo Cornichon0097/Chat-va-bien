@@ -24,10 +24,9 @@ int main(void)
         assert(fdl_remove(&fdl, 5) != 0);
 
         assert(fdl_remove(&fdl, 1) == 0);
-        assert(fdl.nfds == 2);
         assert(fdl_get(&fdl, 1) == NULL);
 
-        assert(fdl.fds[1].fd == 3);
+        assert(fdl.fds[1].fd == -1);
 
         fdl_destroy(&fdl);
         assert(fdl.fds == NULL);

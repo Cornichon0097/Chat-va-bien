@@ -6,4 +6,4 @@ target_link_libraries(test_fdlist
     cvb)
 
 add_test(NAME TestFDList
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test_fdlist)
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test_fdlist)
