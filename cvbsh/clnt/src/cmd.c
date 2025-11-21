@@ -21,83 +21,106 @@
 
 #define CLEAR_STRING "\033[2J\033[H"
 
-static int cmd_set_non_blocking(const int fd)
+static int cmd_set_non_blocking(struct cmd *const cmd)
 {
-        int flags = fcntl(fd, F_GETFL, 0);
+        cmd->flags = fcntl(cmd->fd, F_GETFL, 0);
 
-        if (flags == -1)
+        if (cmd->flags == -1)
                 return -1;
 
-        return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+        return fcntl(cmd->fd, F_SETFL, cmd->flags | O_NONBLOCK);
 }
 
-/* static int cmd_set_input_modes(const int fd)
+static int cmd_set_input_modes(struct cmd *const cmd)
 {
         struct termios tattr;
 
-        if (tcgetattr(fd, &tattr) == -1)
+        if (tcgetattr(cmd->fd, &tattr) == -1)
                 return -1;
+
+        memccpy(cmd->tattr, &tattr, 1, sizeof(struct termios));
 
         tattr.c_lflag = tattr.c_lflag & ~(ICANON | ECHO);
         tattr.c_cc[VMIN] = 1;
         tattr.c_cc[VTIME] = 0;
 
-        return tcsetattr(fd, TCSAFLUSH, &tattr);
-} */
+        return tcsetattr(cmd->fd, TCSAFLUSH, &tattr);
+}
 
-int cmd_init(struct cmd *const cmd, const int fd)
+int cmd_init(struct cmd *const cmd, const int fd, char *const ps)
 {
         assert(cmd != NULL);
 
-        cmd->fd = fd;
+        cmd->tattr = (struct termios *) malloc(sizeof(struct termios));
+
+        if (cmd->tattr == NULL)
+                return -1;
+
+        cmd->ps = ps;
         cmd->cursor = 0;
+        cmd->fd = fd;
 
         if (!isatty(fd))
                 return -1;
 
-        if (cmd_set_non_blocking(fd) == -1)
+        if (cmd_set_non_blocking(cmd) == -1)
                 return -1;
 
-        /* return cmd_set_input_modes(fd); */
-        return 0;
+        return cmd_set_input_modes(cmd);
+}
+
+static void cmd_del(struct cmd *const cmd)
+{
+        if (cmd->cursor > 0) {
+                --cmd->cursor;
+                cmd->buf[cmd->cursor] = '\0';
+
+                printf("\033[1D");
+                printf("\033[K");
+        }
+}
+
+static void cmd_getkey(struct cmd *const cmd, const char c)
+{
+        if (cmd->cursor < CMD_BUFSIZ - 1) {
+                cmd->buf[cmd->cursor] = c;
+                ++cmd->cursor;
+                cmd->buf[cmd->cursor] = '\0';
+
+                putchar(c);
+        }
 }
 
 int cmd_read(struct cmd *const cmd)
 {
-        int nread;
+        char c;
 
         assert(cmd != NULL);
 
-        while ((nread = read(cmd->fd, cmd->buf + cmd->cursor, 1)) == 1) {
-                switch (cmd->buf[cmd->cursor]) {
-                case '\n':
-                        cmd->buf[cmd->cursor] = '\0';
-
-                        return '\n';
-
-                case 127:
-                case '\b':
-                        if (cmd->cursor > 0) {
-                                --cmd->cursor;
+        while ((c = getchar()) != EOF) {
+                if (c == '\n') {
+                        if (cmd->cursor < CMD_BUFSIZ - 1) {
                                 cmd->buf[cmd->cursor] = '\0';
                         }
-                        break;
 
-                default:
-                        ++cmd->cursor;
-                        break;
+                        return '\n';
                 }
+
+                if ((c == 127) || (c == '\b'))
+                        cmd_del(cmd);
+                else
+                        cmd_getkey(cmd, c);
         }
 
-        if (nread == -1)
+        if (c == EOF)
                 return -1;
 
         return cmd->buf[cmd->cursor];
 }
 
-void cmd_prompt(const char *const ps)
+void cmd_prompt(const struct cmd *const cmd)
 {
-        printf("%s> ", ps);
+        printf("%s> %s", cmd->ps, cmd->buf);
         fflush(stdout);
 }
 
@@ -113,3 +136,10 @@ void cmd_prompt(const char *const ps)
 
         return 0;
 } */
+
+void cmd_restore(const struct cmd *const cmd)
+{
+        fcntl(cmd->fd, F_SETFL, cmd->flags);
+        tcsetattr(cmd->fd, TCSAFLUSH, cmd->tattr);
+        free(cmd->tattr);
+}

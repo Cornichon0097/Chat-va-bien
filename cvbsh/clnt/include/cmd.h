@@ -1,20 +1,27 @@
 #ifndef CMD_H
 #define CMD_H
 
-#define CMD_BUFSIZ 2040
+#include <termios.h>
 
-#define CMD_INIT {"", 0, -1}
+#define CMD_BUFSIZ 2048
+
+#define CMD_INIT {"", NULL, NULL, 0, -1, 0}
 
 struct cmd {
         char buf[CMD_BUFSIZ];
+        struct termios *tattr;
+        char *ps;
         int cursor;
         int fd;
+        int flags;
 };
 
-int cmd_init(struct cmd *cmd, int fd);
+int cmd_init(struct cmd *cmd, int fd, char *ps);
 
 int cmd_read(struct cmd *cmd);
 
-void cmd_prompt(const char *ps);
+void cmd_prompt(const struct cmd *cmd);
+
+void cmd_restore(const struct cmd *cmd);
 
 #endif /* cmd.h */

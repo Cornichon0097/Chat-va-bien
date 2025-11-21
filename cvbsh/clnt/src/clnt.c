@@ -66,8 +66,9 @@ static void clnt_cmd(struct clnt *const clnt)
                 msg_send_text(clnt->srvr, clnt->cmd.buf, clnt->cmd.cursor);
 
                 clnt->cmd.cursor = 0;
+                clnt->cmd.buf[0] = '\0';
 
-                cmd_prompt(clnt->uname);
+                cmd_prompt(&(clnt->cmd));
         }
 }
 
@@ -86,7 +87,10 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
                         break;
 
                 default:
+                        printf("\r \x1b[2K");
                         printf("%s\n", buf);
+                        fflush(stdout);
+                        cmd_prompt(&(clnt->cmd));
                         break;
                 }
 
@@ -120,7 +124,7 @@ void clnt_run(struct clnt *const clnt)
                 clearerr(stdin);
         }
 
-        if (cmd_init(&(clnt->cmd), STDIN_FILENO) == -1) {
+        if (cmd_init(&(clnt->cmd), STDIN_FILENO, clnt->uname) == -1) {
                 log_fatal("[clnt] cmd_init(): %s", strerror(errno));
                 exit(EXIT_FAILURE);
         }
@@ -132,7 +136,7 @@ void clnt_run(struct clnt *const clnt)
                 exit(EXIT_FAILURE);
         }
 
-        cmd_prompt(clnt->uname);
+        cmd_prompt(&(clnt->cmd));
 
         for (;;) {
                 ready = poll(clnt->fdl.fds, clnt->fdl.nfds, -1);
@@ -162,6 +166,8 @@ void clnt_cleanup(__attribute__((unused)) int status, void *arg)
         struct clnt *clnt = (struct clnt *) arg;
 
         log_info("[clnt] Clean up and exit");
+
+        cmd_restore(&(clnt->cmd));
 
         if (clnt->log_file != NULL)
                 fclose(clnt->log_file);
