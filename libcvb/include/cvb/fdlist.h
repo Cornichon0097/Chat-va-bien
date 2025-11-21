@@ -61,7 +61,7 @@ int fdl_add(struct fdlist *fdl, int fd, short events);
  * \brief      Gets a file descriptor.
  *
  * The \c dl_get() function returns the first occurence of \a fd in the file
- * descriptors list \a fdl as a <tt>pollfd struct<tt>. If \a fd is not found in
+ * descriptors list \a fdl as a <tt>struct pollfd<tt>. If \a fd is not found in
  * \a fdl, then \c fdl_get() returns NULL.If there are other occurrences of
  * \a fd left in \a fdl, they are ignored.
  *

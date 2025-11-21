@@ -25,14 +25,12 @@
 #ifndef CVB_NET_H
 #define CVB_NET_H
 
-#include <stddef.h>
-
 /**
  * \brief      Fetches a socket.
  *
- * The \c fetch_socket() function tries to fetch a socket with the given
+ * The \c net_fetch_socket() function tries to fetch a socket with the given
  * parameters \a host and \a service. If the \a host is NULL, then
- * \c fetch_socket() will return a socket suitable for \c clnt_accept().
+ * \c net_fetch_socket() will return a socket suitable for \c net_accept_clnt().
  * Otherwise, the socket will be \c connect()ed directly to the \a host.
  *
  * \param[in]  host     The host
@@ -40,50 +38,37 @@
  *
  * \return     The fetched socket.
  */
-int fetch_socket(const char *host, const char *service);
+int net_fetch_socket(const char *host, const char *service);
+
+/**
+ * \brief      Fetches next socket.
+ *
+ * The \c net_fetch_next() function tries to fetch a socket with the very after
+ * port number \a service.
+ *
+ * \see        net_fetch_socket()
+ *
+ * \param[in]  host     The host
+ * \param      service  The service
+ *
+ * \return     The fetched socket.
+ */
+int net_fetch_next(const char *host, char *service);
 
 /**
  * \brief      Accepts a new client connection.
  *
- * The \c clnt_accept() function tries to \c accept() a new connection request
- * from the listening socket \a listener and return the new connected socket.
- * The argument \a listener must be a socket that has been created with
- * \c fetch_socket().
+ * The \c net_accept_clnt() function tries to \c accept() a new connection
+ * request from the listening socket \a listener and return the new connected
+ * socket. The argument \a listener must be a socket that has been created with
+ * \c net_fetch_socket().
  *
- * \see fetch_socket()
+ * \see        net_fetch_socket()
  *
  * \param[in]  listener  The listening socket
  *
  * \return     The new socket on success, -1 otherwise.
  */
-int clnt_accept(int listener);
-
-/**
- * \brief      Sends a message.
- *
- * The \c send_msg() function sends up to \a size bytes from the message \a msg
- * to the socket \a sfd.
- *
- * \param[in]  sfd   The socket
- * \param[in]  msg   The message
- * \param[in]  size  The message size
- *
- * \return     the number of bytes written.
- */
-int send_msg(int sfd, const void *msg, size_t size);
-
-/**
- * \brief      Receives a message.
- *
- * The \c recv_msg() function reads up to \a size bytes from the socket \a sfd
- * and stores them into the message \a msg.
- *
- * \param[in]  sfd   The socket
- * \param[out] msg   The message
- * \param[in]  size  The message size
- *
- * \return     the number of bytes read.
- */
-int recv_msg(int sfd, void *msg, size_t size);
+int net_accept_clnt(int listener);
 
 #endif /* cvb/net.h */

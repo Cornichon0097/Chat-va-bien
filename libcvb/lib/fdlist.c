@@ -22,6 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <assert.h>
 #include <stdlib.h>
 
 #include <cvb/fdlist.h>
@@ -34,13 +35,13 @@
 /**
  * \brief      Performs a left shift.
  *
- * The \c fdl_shift_left() function moves to the left each elements of the file
- * descriptors list \a fdl from \a start.
+ * The \c _fdl_shift_left() function moves to the left each elements of the
+ * file descriptors list \a fdl from \a start.
  *
  * \param      fdl    The file descriptors list
  * \param[in]  start  The first element to move
  */
-static void fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
+static void _fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
 {
         nfds_t i;
 
@@ -62,18 +63,12 @@ static void fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
  */
 int fdl_add(struct fdlist *const fdl, const int fd, const short events)
 {
-        if (fdl->fds == NULL) {
-                fdl->fds = (struct pollfd *) malloc(DEFAULT_SIZE * sizeof(struct pollfd));
-
-                if (fdl->fds == NULL)
-                        return -1;
-
-                fdl->size = DEFAULT_SIZE;
-                fdl->nfds = 0;
-        }
+        assert(fdl != NULL);
 
         if (fdl->nfds >= fdl->size) {
-                fdl->fds = (struct pollfd *) realloc(fdl->fds, (fdl->size + DEFAULT_SIZE) * sizeof(struct pollfd));
+                fdl->fds = (struct pollfd *) realloc(fdl->fds,
+                                                     (fdl->size + DEFAULT_SIZE)
+                                                     * sizeof(struct pollfd));
 
                 if (fdl->fds == NULL)
                         return -1;
@@ -92,7 +87,7 @@ int fdl_add(struct fdlist *const fdl, const int fd, const short events)
  * \brief      Gets a file descriptor.
  *
  * The \c dl_get() function returns the first occurence of \a fd in the file
- * descriptors list \a fdl as a <tt>pollfd struct<tt>. If \a fd is not found in
+ * descriptors list \a fdl as a <tt>struct pollfd<tt>. If \a fd is not found in
  * \a fdl, then \c fdl_get() returns NULL.If there are other occurrences of
  * \a fd left in \a fdl, they are ignored.
  *
@@ -104,6 +99,8 @@ int fdl_add(struct fdlist *const fdl, const int fd, const short events)
 struct pollfd *fdl_get(const struct fdlist *const fdl, const int fd)
 {
         nfds_t i;
+
+        assert(fdl != NULL);
 
         for (i = 0; i < fdl->nfds; ++i) {
                 if (fdl->fds[i].fd == fd)
@@ -131,9 +128,11 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
 {
         nfds_t i;
 
+        assert(fdl != NULL);
+
         for (i = 0; i < fdl->nfds; ++i) {
                 if (fdl->fds[i].fd == fd) {
-                        fdl_shift_left(fdl, i);
+                        _fdl_shift_left(fdl, i);
                         --fdl->nfds;
                         return 0;
                 }
@@ -152,13 +151,10 @@ int fdl_remove(struct fdlist *const fdl, const int fd)
  */
 void fdl_destroy(struct fdlist *const fdl)
 {
-        if (fdl == NULL)
-                return;
-
-        if (fdl->fds == NULL)
-                return;
+        assert(fdl != NULL);
 
         free(fdl->fds);
+
         fdl->fds = NULL;
         fdl->nfds = 0;
         fdl->size = 0;

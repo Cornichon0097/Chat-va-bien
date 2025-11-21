@@ -1,6 +1,6 @@
 /**
  * \file       net.c
- * \brief      Functions dealing with network connections
+ * \brief      Functions dealing with network connections.
  *
  * Copyright (c) 2025 Antoni Blanche
  *
@@ -22,29 +22,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+#include <assert.h>
 #include <errno.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <sys/socket.h>
+#include <sys/types.h>
 
 #include <cvb/logger.h>
-#include <cvb/net.h>
 
 /**
  * \brief      Binds a socket.
  *
- * The \c bind_socket() function tries to \c bind() each socket provided by
+ * The \c net_bind_socket() function tries to \c bind() each socket provided by
  * the address list \a rp until success.
  *
  * \param[in]  rp    The address list
  *
  * \return     The binded socket.
  */
-static int bind_socket(const struct addrinfo *rp)
+static int net_bind_socket(const struct addrinfo *rp)
 {
         int sfd, optval = 1;
 
@@ -68,14 +68,14 @@ static int bind_socket(const struct addrinfo *rp)
 /**
  * \brief      Connects a socket.
  *
- * The \c connect_socket() function tries to \c connect() each socket provided
- * by the address list \a rp until success.
+ * The \c net_connect_socket() function tries to \c connect() each socket
+ * provided by the address list \a rp until success.
  *
  * \param[in]  rp    The address list
  *
  * \return     The Connected socket.
  */
-static int connect_socket(const struct addrinfo *rp)
+static int net_connect_socket(const struct addrinfo *rp)
 {
         int sfd;
 
@@ -96,9 +96,9 @@ static int connect_socket(const struct addrinfo *rp)
 /**
  * \brief      Fetches a socket.
  *
- * The \c fetch_socket() function tries to fetch a socket with the given
+ * The \c net_fetch_socket() function tries to fetch a socket with the given
  * parameters \a host and \a service. If the \a host is NULL, then
- * \c fetch_socket() will return a socket suitable for \c clnt_accept().
+ * \c net_fetch_socket() will return a socket suitable for \c net_accept_clnt().
  * Otherwise, the socket will be \c connect()ed directly to the \a host.
  *
  * \param[in]  host     The host
@@ -106,14 +106,16 @@ static int connect_socket(const struct addrinfo *rp)
  *
  * \return     The fetched socket.
  */
-int fetch_socket(const char *const host, const char *const service)
+int net_fetch_socket(const char *const host, const char *const service)
 {
         struct addrinfo hints, *res;
         int sfd;
         int rc;
 
+        assert(service != NULL);
+
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family   = AF_UNSPEC;
+        hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = 0;
 
@@ -132,19 +134,27 @@ int fetch_socket(const char *const host, const char *const service)
         }
 
         if (host == NULL) {
-                sfd = bind_socket(res);
+                log_debug("[net] Trying to listen on port %s", service);
 
-                if (listen(sfd, 10) != 0) {
-                        log_error("[net] listen(): %s", strerror(errno));
-                }
+                sfd = net_bind_socket(res);
+
+                if (listen(sfd, 10) != 0)
+                        log_warn("[net] listen(): %s", strerror(errno));
         } else {
                 log_debug("[net] Attempt connection to %s:%s", host, service);
-                sfd = connect_socket(res);
+
+                sfd = net_connect_socket(res);
         }
 
+        freeaddrinfo(res);
+
         if (sfd < 0) {
-               log_error("[net] Failed to bind a socket");
-               return -1;
+                if (host == NULL)
+                        log_warn("[net] Failed to bind a socket");
+                else
+                        log_warn("[net] Failed to connect a socket");
+
+                return -1;
         }
 
         if (host == NULL)
@@ -152,26 +162,59 @@ int fetch_socket(const char *const host, const char *const service)
         else
                 log_info("[net] Successfuly connected to %s:%s", host, service);
 
-        freeaddrinfo(res);
-
         return sfd;
+}
+
+/**
+ * \brief      Fetches next socket.
+ *
+ * The \c net_fetch_next() function tries to fetch a socket with the very after
+ * port number \a service.
+ *
+ * \see        net_fetch_socket()
+ *
+ * \param[in]  host     The host
+ * \param      service  The service
+ *
+ * \return     The fetched socket.
+ */
+int net_fetch_next(const char *const host, char *const service)
+{
+        assert (service != NULL);
+
+        ++service[4];
+
+        if (service[4] == ':') {
+                service[4] = '0';
+                ++service[3];
+        }
+
+        if (service[3] == ':') {
+                service[3] = '0';
+                ++service[2];
+        }
+
+        if (service[2] == ':')
+                return -1;
+
+        return net_fetch_socket(host, service);
 }
 
 /**
  * \brief      Accepts a new client connection.
  *
- * The \c clnt_accept() function tries to \c accept() a new connection request
- * from the listening socket \a listener and return the new connected socket.
- * The argument \a listener must be a socket that has been created with
- * \c fetch_socket().
+ * The \c net_accept_clnt() function tries to \c accept() a new connection
+ * request from the listening socket \a listener and return the new connected
+ * socket. The argument \a listener must be a socket that has been created with
+ * \c net_fetch_socket().
  *
- * \see fetch_socket()
+ * \see net_fetch_socket()
  *
  * \param[in]  listener  The listening socket
  *
  * \return     The new socket on success, -1 otherwise.
  */
-int clnt_accept(const int listener)
+int net_accept_clnt(const int listener)
 {
         struct sockaddr addr;
         socklen_t addrlen;
@@ -183,6 +226,7 @@ int clnt_accept(const int listener)
 
         if (sfd < 0) {
                 log_error("[net] accept(): %s", strerror(errno));
+
                 return -1;
         }
 
@@ -194,56 +238,9 @@ int clnt_accept(const int listener)
                         log_warn("[net] getnameinfo(): %s", strerror(errno));
                 else
                         log_warn("[net] getnameinfo(): %s", gai_strerror(rc));
-        } else
+        } else {
                 log_info("[net] New connection from %s:%s", host, service);
+        }
 
         return sfd;
-}
-
-/**
- * \brief      Sends a message.
- *
- * The \c send_msg() function sends up to \a size bytes from the message \a msg
- * to the socket \a sfd.
- *
- * \param[in]  sfd   The socket
- * \param[in]  msg   The message
- * \param[in]  size  The message size
- *
- * \return     the number of bytes written.
- */
-int send_msg(const int sfd, const void *const msg, const size_t size)
-{
-        int nsent;
-
-        nsent = send(sfd, msg, size, 0);
-
-        if (nsent == -1)
-                log_error("[net] send(): %s", strerror(errno));
-
-        return nsent;
-}
-
-/**
- * \brief      Receives a message.
- *
- * The \c recv_msg() function reads up to \a size bytes from the socket \a sfd
- * and stores them into the message \a msg.
- *
- * \param[in]  sfd   The socket
- * \param[out] msg   The message
- * \param[in]  size  The message size
- *
- * \return     the number of bytes read.
- */
-int recv_msg(const int sfd, void *const msg, const size_t size)
-{
-        int nread;
-
-        nread = recv(sfd, msg, size, 0);
-
-        if (nread == -1)
-                log_error("[net] recv(): %s", strerror(errno));
-
-        return nread;
 }

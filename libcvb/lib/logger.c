@@ -25,16 +25,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include <assert.h>
+#include <stdio.h>
 #include <time.h>
 
 #include <cvb/logger.h>
 
-/**
- * \brief      Maximum callbacks.
- *
- * The maximum amount of callbacks allowed for the logger.
- */
-#define MAX_CALLBACKS 32
 
 /**
  * \brief      Callback structure.
@@ -49,11 +45,10 @@ struct callback {
  * \brief      The logger.
  */
 static struct {
-        void *udata;                              /**< The output        */
-        log_lock_t lock;                          /**< The lock function */
-        int level;                                /**< The logging level */
-        bool quiet;                               /**< The quiet mode    */
-        struct callback callbacks[MAX_CALLBACKS]; /**< The callbacks     */
+        void *udata;        /**< The output        */
+        int level;          /**< The logging level */
+        bool quiet;         /**< The quiet mode    */
+        struct callback cb; /**< The callback      */
 } logger;
 
 /**
@@ -92,34 +87,6 @@ static void set_log_event(struct log_event *const ev, void *const udata)
 }
 
 /**
- * \brief      Locks the logger output.
- *
- * The log_lock() function locks the logger output before logging if a lock
- * function has been set with log_locker().
- *
- * \see        log_locker()
- */
-static void log_lock(void)
-{
-        if (logger.lock)
-                logger.lock(true, logger.udata);
-}
-
-/**
- * \brief      Unlocks the logger output.
- *
- * The log_unlock() function unlocks the logger output previously locked by
- * log_lock().
- *
- * \see        log_lock()
- */
-static void log_unlock(void)
-{
-        if (logger.lock)
-                logger.lock(false, logger.udata);
-}
-
-/**
  * \brief      Enables quiet mode.
  *
  * The log_quiet() function enables or disables the logger quiet mode. When
@@ -145,25 +112,12 @@ void log_quiet(const bool enable)
  */
 const char *log_level(const int level)
 {
+        assert(level >= LOG_DEBUG);
+        assert(level <= LOG_FATAL);
+
         logger.level = level;
 
         return level_strings[level];
-}
-
-/**
- * \brief      Sets a locker for the logger output.
- *
- * The log_locker() function sets a locker for the logger and change the output.
- * If the lock function is NULL, no lock will be performed before logging
- * messages.
- *
- * \param[in]  fn     The lock function
- * \param[in]  udata  The logger output
- */
-void log_locker(log_lock_t fn, void *const udata)
-{
-        logger.lock = fn;
-        logger.udata = udata;
 }
 
 /**
@@ -176,24 +130,13 @@ void log_locker(log_lock_t fn, void *const udata)
  * \param[in]  fn     The callbback logging function
  * \param[in]  udata  The callbback output
  * \param[in]  level  The callbback logging level
- *
- * \return     0 on success, -1 otherwise.
  */
-int log_callback(log_fn_t fn, void *const udata, const int level)
+void log_callback(log_fn_t fn, void *const udata, const int level)
 {
-        int i;
+        assert(level >= LOG_DEBUG);
+        assert(level <= LOG_FATAL);
 
-        for (i = 0; i < MAX_CALLBACKS; ++i) {
-                if (!logger.callbacks[i].fn) {
-                        logger.callbacks[i] = (struct callback) {
-                                fn, udata, level
-                        };
-
-                        return 0;
-                }
-        }
-
-        return -1;
+        logger.cb = (struct callback) {fn, udata, level};
 }
 
 /**
@@ -208,6 +151,8 @@ int log_callback(log_fn_t fn, void *const udata, const int level)
 void stdout_callback(struct log_event *const ev)
 {
         char buf[16];
+
+        assert(ev != NULL);
 
         buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 
@@ -234,6 +179,8 @@ void file_callback(struct log_event *const ev)
 {
         char buf[64];
 
+        assert(ev != NULL);
+
         buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
 
         fprintf(ev->udata, "%s %-5s %s:%d: ",
@@ -259,10 +206,6 @@ void log_log(const int level, const char *const file,
         struct log_event ev = {
                 .fmt = fmt, .file = file, .line = line, .level = level
         };
-        struct callback *cb;
-        int i;
-
-        log_lock();
 
         if ((!logger.quiet) && (level >= logger.level)) {
                 set_log_event(&ev, stderr);
@@ -271,16 +214,10 @@ void log_log(const int level, const char *const file,
                 va_end(ev.ap);
         }
 
-        for (i = 0; (i < MAX_CALLBACKS) && (logger.callbacks[i].fn); ++i) {
-                cb = logger.callbacks + i;
-
-                if (level >= cb->level) {
-                        set_log_event(&ev, cb->udata);
-                        va_start(ev.ap, fmt);
-                        cb->fn(&ev);
-                        va_end(ev.ap);
-                }
+        if ((logger.cb.fn != NULL) && (level >= logger.cb.level)) {
+                set_log_event(&ev, logger.cb.udata);
+                va_start(ev.ap, fmt);
+                logger.cb.fn(&ev);
+                va_end(ev.ap);
         }
-
-        log_unlock();
 }

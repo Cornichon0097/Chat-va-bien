@@ -28,7 +28,6 @@
 #ifndef CVB_LOGGER_H
 #define CVB_LOGGER_H
 
-#include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
@@ -51,13 +50,6 @@ struct log_event {
  * \see        log_callback()
  */
 typedef void (*log_fn_t)(struct log_event *);
-
-/**
- * \brief      Lock function type.
- *
- * \see        log_locker()
- */
-typedef void (*log_lock_t)(bool, void *);
 
 /**
  * \brief      Logging levels.
@@ -132,18 +124,6 @@ void log_quiet(bool enable);
 const char *log_level(int level);
 
 /**
- * \brief      Sets a locker for the logger output.
- *
- * The log_locker() function sets a locker for the logger and change the output.
- * If the lock function is NULL, no lock will be performed before logging
- * messages.
- *
- * \param[in]  fn     The lock function
- * \param[in]  udata  The logger output
- */
-void log_locker(log_lock_t fn, void *udata);
-
-/**
  * \brief      Adds a callback.
  *
  * The log_callback() function adds a callback to the logger. Each time a log is
@@ -153,10 +133,8 @@ void log_locker(log_lock_t fn, void *udata);
  * \param[in]  fn     The callbback logging function
  * \param[in]  udata  The callbback output
  * \param[in]  level  The callbback logging level
- *
- * \return     0 on success, -1 otherwise.
  */
-int log_callback(log_fn_t fn, void *udata, int level);
+void log_callback(log_fn_t fn, void *udata, int level);
 
 /**
  * \brief      Logs a message on stdout.

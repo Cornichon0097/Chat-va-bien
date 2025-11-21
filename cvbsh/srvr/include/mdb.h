@@ -1,6 +1,8 @@
 #ifndef DB_H
 #define DB_H
 
+#include <stddef.h>
+
 #define DB_URI 0x0
 #define BD_PATH 0x1
 

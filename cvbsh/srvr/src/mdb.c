@@ -1,13 +1,13 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
 #include <mongoc/mongoc.h>
 #include <bson/bson.h>
 
-#include <logger.h>
+#include <cvb/logger.h>
 
-#include <db.h>
+#include "db.h"
 
 #define DB_USER_FIELD "user"
 #define DB_PWD_FIELD "pwd"
@@ -160,5 +160,6 @@ void db_close(struct db_connect **const dbc)
         mongoc_cleanup();
 
         free(*dbc);
+
         *dbc = NULL;
 }

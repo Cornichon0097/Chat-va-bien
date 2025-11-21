@@ -5,7 +5,7 @@
 --indent-namespaces
 --indent-preproc-define
 --indent-col1-comments
-#--min-conditional-indent=0
+--min-conditional-indent=0
 --max-continuation-indent=80
 --break-blocks
 --pad-oper
@@ -22,4 +22,3 @@
 --close-templates
 --max-code-length=80
 --mode=c
--n
