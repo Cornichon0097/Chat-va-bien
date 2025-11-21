@@ -126,10 +126,9 @@ struct pollfd *fdl_get(const struct fdlist *const fdl, const int fd)
  * \brief      Removes a file descriptor.
  *
  * The \c fdl_remove() function removes the first occurence of \a fd in the file
- * descriptors list \a fdl. After removing an element, \c fdl_remove() moves to
- * the left all the file descriptors that are after \a fd in the list. If \a fd
- * is not found in \a fdl, then \c fdl_remove() does nothing and returns -1. If
- * there are other occurrences of \a fd left in \a fdl, they are ignored.
+ * descriptors list \a fdl. If \a fd is not found in \a fdl, then
+ * \c fdl_remove() does nothing and returns -1. If there are other occurrences
+ * of \a fd left in \a fdl, they are ignored.
  *
  * \param      fdl   The file descriptors list
  * \param[in]  fd    The file descriptor to remove
