@@ -1,6 +1,7 @@
 add_library(cvb
     SHARED
     fdlist.c
+    fdmap.c
     logger.c
     msg.c
     net.c)
