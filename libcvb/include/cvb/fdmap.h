@@ -33,7 +33,7 @@
 /**
  * \brief      Map initializer.
  */
-#define FDMAP_INIT {NULL, 0}
+#define FDMAP_INIT {NULL, 0, 0}
 
 /**
  * \brief      File descriptors map.
@@ -42,13 +42,14 @@
  */
 struct fdmap {
         char **fdname;
-        size_t size;
+        int cursor;
+        int size;
 };
 
 /**
  * \brief      Puts a file descriptor.
  *
- * The \c fdm_puts() function puts \a fdname of \a fd in \a fdm. If \a fd had
+ * The \c fdm_put() function puts \a fdname of \a fd in \a fdm. If \a fd had
  * already a name, it is returned.
  *
  * \param      fdm     The file descriptors map
@@ -57,7 +58,7 @@ struct fdmap {
  *
  * \return     The previous name on success, -1 otherwise.
  */
-char *fdm_puts(struct fdmap *fdm, int fd, char *fdname);
+char *fdm_put(struct fdmap *fdm, int fd, char *fdname);
 
 /**
  * \brief      Removes a file descriptor.

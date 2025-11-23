@@ -74,7 +74,7 @@ char *fdm_put(struct fdmap *const fdm, int const fd, char *const fdname)
         assert(fdm != NULL);
         assert(fd >= 0);
 
-        if (fdm->size <= (size_t) fd) {
+        if (fdm->size <= fd) {
                 fdm->fdname = (char **) realloc(fdm->fdname, fd + DEFAULT_SIZE);
 
                 if (fdm->fdname == NULL)
@@ -82,8 +82,10 @@ char *fdm_put(struct fdmap *const fdm, int const fd, char *const fdname)
 
                 memset(fdm->fdname + fdm->size, 0, fd + DEFAULT_SIZE);
 
-                fdm->size = (size_t) fd + DEFAULT_SIZE;
+                fdm->size = fd + DEFAULT_SIZE;
         }
+
+        fdm->cursor = fd;
 
         return fdm_set(fdm, fd, fdname);
 }
@@ -103,7 +105,7 @@ char *fdm_remove(struct fdmap *const fdm, const int fd)
 {
         assert(fdm != NULL);
         assert(fd >= 0);
-        assert((size_t) fd < fdm->size);
+        assert(fd <= fdm->cursor);
 
         return fdm_set(fdm, fd, NULL);
 }
@@ -122,7 +124,7 @@ char *fdm_get(const struct fdmap *const fdm, const int fd)
 {
         assert(fdm != NULL);
         assert(fd >= 0);
-        assert((size_t) fd < fdm->size);
+        assert(fd <= fdm->cursor);
 
         return fdm->fdname[fd];
 }
@@ -141,13 +143,15 @@ char *fdm_get(const struct fdmap *const fdm, const int fd)
 int fdm_contains(const struct fdmap *const fdm, const char *const fdname,
                    const size_t len)
 {
-        size_t i;
+        int i;
 
         assert(fdm != NULL);
 
-        for (i = 0; i < fdm->size; ++i) {
-                if (strncmp(fdname, fdm->fdname[i], len) == 0)
-                        return (int) i;
+        for (i = 0; i <= fdm->cursor; ++i) {
+                if (fdm->fdname[i] != NULL) {
+                        if (strncmp(fdname, fdm->fdname[i], len) == 0)
+                                return i;
+                }
         }
 
         return -1;
@@ -167,5 +171,6 @@ void fdm_destroy(struct fdmap *const fdm)
         free(fdm->fdname);
 
         fdm->fdname = NULL;
+        fdm->cursor = 0;
         fdm->size = 0;
 }

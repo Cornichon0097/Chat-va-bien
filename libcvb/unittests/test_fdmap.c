@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <cvb/fdmap.h>
 
@@ -13,11 +14,19 @@ int main(void)
                 "test"
         };
 
-        assert(fdm_puts(&fdm, 0, fdnames[0]) == NULL);
-        assert(fdm_puts(&fdm, 1, fdnames[1]) == NULL);
-        assert(fdm_puts(&fdm, 2, fdnames[2]) == NULL);
+        assert(fdm_put(&fdm, 0, fdnames[0]) == NULL);
+        assert(fdm_put(&fdm, 1, fdnames[1]) == NULL);
+        assert(fdm_put(&fdm, 2, fdnames[2]) == NULL);
+
+        assert(fdm_get(&fdm, 0) == fdnames[0]);
+        assert(fdm_contains(&fdm, fdnames[2], strlen(fdnames[2])) == 2);
 
         assert(fdm_remove(&fdm, 1) == fdnames[1]);
+        assert(fdm_get(&fdm, 1) == NULL);
+        assert(fdm_contains(&fdm, fdnames[1], strlen(fdnames[1])) == -1);
+
+        assert(fdm_put(&fdm, 0, fdnames[3]) == fdnames[0]);
+        assert(fdm_put(&fdm, 1, fdnames[3]) == NULL);
 
         fdm_destroy(&fdm);
 
