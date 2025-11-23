@@ -38,7 +38,8 @@ static int auth_send(const int srvr, const char *const uname,
         if (pwd != NULL)
                 msg_send_text(srvr, pwd, strlen(pwd));
 
-        assert(msg_recv_code(srvr) == MSG_CODE_RECV_AUTH);
+        if (msg_recv_code(srvr) != MSG_CODE_RECV_AUTH)
+                return -1;
 
         return msg_recv_code(srvr);
 }
@@ -65,6 +66,8 @@ int auth_request(const int srvr, char *const uname, const size_t size)
                         fprintf(stderr, "Wrong username or password\n");
                 else if (auth == 2)
                         fprintf(stderr, "Username already taken\n");
+                else
+                        log_error("[auth] Connection lost to the server");
         }
 
         log_info("[auth] Logged in as %s", uname);
