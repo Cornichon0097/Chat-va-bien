@@ -66,8 +66,8 @@ int auth_request(const int srvr, char *const uname, const size_t size)
                         fprintf(stderr, "Wrong username or password\n");
                 else if (auth == 2)
                         fprintf(stderr, "Username already taken\n");
-                else
-                        log_error("[auth] Connection lost to the server");
+                else if (auth == -1)
+                        log_error("[auth] Connection to server lost");
         }
 
         log_info("[auth] Logged in as %s", uname);
