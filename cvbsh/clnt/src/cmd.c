@@ -71,6 +71,8 @@ int cmd_init(struct cmd *const cmd, const int fd, char *const ps)
 
 static void cmd_del(struct cmd *const cmd)
 {
+        assert(cmd != NULL);
+
         if (cmd->cursor > 0) {
                 --cmd->cursor;
                 cmd->buf[cmd->cursor] = '\0';
@@ -82,6 +84,8 @@ static void cmd_del(struct cmd *const cmd)
 
 static void cmd_getkey(struct cmd *const cmd, const char c)
 {
+        assert(cmd != NULL);
+
         if (cmd->cursor < CMD_BUFSIZ - 1) {
                 cmd->buf[cmd->cursor] = c;
                 ++cmd->cursor;
@@ -120,6 +124,8 @@ int cmd_read(struct cmd *const cmd)
 
 void cmd_prompt(const struct cmd *const cmd)
 {
+        assert(cmd != NULL);
+
         printf("%s> %s", cmd->ps, cmd->buf);
         fflush(stdout);
 }
@@ -139,7 +145,11 @@ void cmd_prompt(const struct cmd *const cmd)
 
 void cmd_restore(const struct cmd *const cmd)
 {
-        fcntl(cmd->fd, F_SETFL, cmd->flags);
-        tcsetattr(cmd->fd, TCSAFLUSH, cmd->tattr);
-        free(cmd->tattr);
+        assert(cmd != NULL);
+
+        if (cmd->tattr) {
+                fcntl(cmd->fd, F_SETFL, cmd->flags);
+                tcsetattr(cmd->fd, TCSAFLUSH, cmd->tattr);
+                free(cmd->tattr);
+        }
 }
