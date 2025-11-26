@@ -61,15 +61,27 @@ int clnt_fetch_socket(char *const service)
 
 static void clnt_cmd(struct clnt *const clnt)
 {
-        if (cmd_read(&(clnt->cmd)) == '\n') {
-                msg_send_code(clnt->srvr, MSG_CODE_SEND_PUBLIC);
-                msg_send_text(clnt->srvr, clnt->cmd.buf, clnt->cmd.cursor);
+        if (cmd_read(&(clnt->cmd)) != '\n')
+                return;
 
-                clnt->cmd.cursor = 0;
-                clnt->cmd.buf[0] = '\0';
-
-                cmd_prompt(&(clnt->cmd));
+        if (clnt->cmd.buf[0] == '/') {
+                if (strcmp(clnt->cmd.buf, "/help") == 0)
+                        cmd_help();
+                else if (strcmp(clnt->cmd.buf, "/quit") == 0)
+                        exit(EXIT_SUCCESS);
+                else if (strcmp(clnt->cmd.buf, "/exit") == 0)
+                        exit(EXIT_SUCCESS);
+                else
+                        fprintf(stderr, "Unknown command %s\n", clnt->cmd.buf);
+        } else {
+                if ((clnt->cmd.buf[0] != '\0') && (clnt->cmd.buf[0] != '\n')) {
+                        msg_send_code(clnt->srvr, MSG_CODE_SEND_PUBLIC);
+                        msg_send_text(clnt->srvr, clnt->cmd.buf,
+                                      clnt->cmd.cursor);
+                }
         }
+
+        cmd_prompt(&(clnt->cmd));
 }
 
 static void clnt_recv(struct clnt *const clnt, int sfd)
@@ -106,7 +118,7 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
                 break;
 
         default:
-                log_warn("[clnt] Unknown message %hhd, ignored", code);
+                log_warn("[clnt] Unknown message code %hhd, ignored", code);
                 break;
         }
 }
@@ -140,6 +152,7 @@ void clnt_run(struct clnt *const clnt)
                 exit(EXIT_FAILURE);
         }
 
+        cmd_help();
         cmd_prompt(&(clnt->cmd));
 
         for (;;) {

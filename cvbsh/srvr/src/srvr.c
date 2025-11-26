@@ -120,7 +120,7 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
                 break;
 
         default:
-                log_warn("[srvr] Unknown request %hhd, ignored", code);
+                log_warn("[srvr] Unknown message code %hhd, ignored", code);
                 break;
         }
 }

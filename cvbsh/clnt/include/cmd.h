@@ -18,9 +18,13 @@ struct cmd {
 
 int cmd_init(struct cmd *cmd, int fd, char *ps);
 
+void cmd_help(void);
+
 int cmd_read(struct cmd *cmd);
 
-void cmd_prompt(const struct cmd *cmd);
+void cmd_flush(struct cmd *cmd);
+
+void cmd_prompt(struct cmd *cmd);
 
 void cmd_restore(const struct cmd *cmd);
 

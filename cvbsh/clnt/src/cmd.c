@@ -95,6 +95,18 @@ static void cmd_getkey(struct cmd *const cmd, const char c)
         }
 }
 
+void cmd_help(void)
+{
+        printf("\nList of commands:\n");
+        printf("\n");
+        printf("MESSAGE           Send public MESSAGE to all users\n");
+        /* printf("/dm USER MESSAGE  Send direct MESSAGE to USER\n"); */
+        /* printf("/ft PATHNAME      Transfer file PATHNAME to server\n"); */
+        printf("/quit             Exit chat app\n");
+        printf("/exit             Exit chat app\n");
+        printf("/help             Display this help\n");
+}
+
 int cmd_read(struct cmd *const cmd)
 {
         char c;
@@ -122,26 +134,21 @@ int cmd_read(struct cmd *const cmd)
         return cmd->buf[cmd->cursor];
 }
 
-void cmd_prompt(const struct cmd *const cmd)
+void cmd_flush(struct cmd *const cmd)
+{
+        cmd->cursor = 0;
+        cmd->buf[0] = '\0';
+}
+
+void cmd_prompt(struct cmd *const cmd)
 {
         assert(cmd != NULL);
 
-        printf("%s> %s", cmd->ps, cmd->buf);
+        cmd_flush(cmd);
+
+        printf("\n\e\[1m%s\e\[0m> %s", cmd->ps, cmd->buf);
         fflush(stdout);
 }
-
-/* static int cmd_help(void)
-{
-        printf("List of commands:\n");
-        printf("\n");
-        printf("MESSAGE       Send public MESSAGE to all users\n");
-        printf(":dm USER MESSAGE  Send direct MESSAGE to USER\n");
-        printf(":ft PATHNAME      Transfer file PATHNAME to server\n");
-        printf(":quit        Exit chat app\n");
-        printf(":help [COMMAND]   cmd this help\n");
-
-        return 0;
-} */
 
 void cmd_restore(const struct cmd *const cmd)
 {
@@ -152,4 +159,6 @@ void cmd_restore(const struct cmd *const cmd)
                 tcsetattr(cmd->fd, TCSAFLUSH, cmd->tattr);
                 free(cmd->tattr);
         }
+
+        printf("\n");
 }
