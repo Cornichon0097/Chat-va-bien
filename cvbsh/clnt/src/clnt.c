@@ -81,19 +81,14 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
 
         switch (code) {
         case MSG_CODE_RECV_PUBLIC:
-                switch (msg_recv_text(sfd, buf)) {
-                case -1:
+                if (msg_recv_text(sfd, buf) == -1) {
                         log_error("[clnt] msg_recv_text(): %s", strerror(errno));
-                        break;
-
-                default:
+                } else {
                         printf("\r \x1b[2K");
                         printf("%s\n", buf);
                         fflush(stdout);
                         cmd_prompt(&(clnt->cmd));
-                        break;
                 }
-
                 break;
 
         case -1:

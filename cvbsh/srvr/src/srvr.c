@@ -76,38 +76,45 @@ static void srvr_broadcast(struct srvr *const srvr, const char *const msg)
 static void srvr_recv(struct srvr *const srvr, int sfd)
 {
         char buf[MSG_BUFSIZ];
+        char *fdname;
         int8_t code = msg_recv_code(sfd);
 
         log_debug("[srvr] Incoming client request");
 
         switch (code) {
         case -1:
-                log_info("[srvr] Client disconnected");
+                fdname = fdm_remove(&(srvr->fdm), sfd);
+
+                log_info("[srvr] Client '%s' disconnected", fdname);
                 fdl_remove(&(srvr->fdl), sfd);
-                free(fdm_remove(&(srvr->fdm), sfd));
+                free(fdname);
                 close(sfd);
                 break;
-        case 1: /* TODO */
-        case 2: /* TODO */
+
+        case MSG_CODE_SEND_NO_AUTH:
+        case MSG_CODE_SEND_AUTH: /* TODO (requires db) */
                 msg_recv_text(sfd, buf);
                 log_info("[srvr] Authentification request from '%s'", buf);
 
                 if (fdm_contains(&(srvr->fdm), buf) != -1) {
                         msg_send_code(sfd, 3);
                         msg_send_code(sfd, 2);
-                        log_info("[srvr] Authentification failed");
+                        log_debug("[srvr] Authentification failed");
                 } else {
                         fdm_put(&(srvr->fdm), sfd, strdup(buf));
                         msg_send_code(sfd, 3);
                         msg_send_code(sfd, 0);
-                        log_info("[srvr] Client authentified");
+                        log_debug("[srvr] Client authentified");
                 }
                 break;
 
-        default: /* TODO */
+        case MSG_CODE_SEND_PUBLIC:
                 msg_recv_text(sfd, buf);
                 srvr_broadcast(srvr, buf);
-                /* log_warn("[srvr] Unknown request %hhd, ignored", code); */
+                break;
+
+        default:
+                log_warn("[srvr] Unknown request %hhd, ignored", code);
                 break;
         }
 }
