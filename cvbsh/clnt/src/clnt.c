@@ -64,7 +64,7 @@ static void clnt_cmd(struct clnt *const clnt)
         if (cmd_read(&(clnt->cmd)) != '\n')
                 return;
 
-        if (clnt->cmd.buf[0] == '/') {
+        if (clnt->cmd.buf[0] == CMD_LINE_CHAR_ID) {
                 if (strcmp(clnt->cmd.buf, "/help") == 0)
                         cmd_help();
                 else if (strcmp(clnt->cmd.buf, "/quit") == 0)

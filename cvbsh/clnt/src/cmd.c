@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,18 +9,6 @@
 #include <cvb/msg.h>
 
 #include "cmd.h"
-
-#define CMD_LINE_CHAR_ID ':'
-
-#define CMD_LINE_DELIM " \t\r\n\a"
-
-#include <fcntl.h>
-#include <termios.h>
-#include <unistd.h>
-
-#include "cmd.h"
-
-#define CLEAR_STRING "\033[2J\033[H"
 
 static int cmd_set_non_blocking(struct cmd *const cmd)
 {

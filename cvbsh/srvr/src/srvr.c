@@ -12,7 +12,6 @@
 #include <cvb/net.h>
 
 #include "srvr.h"
-#include "cvb/fdmap.h"
 
 void srvr_set_logger(struct srvr *const srvr, const char *const pathname)
 {

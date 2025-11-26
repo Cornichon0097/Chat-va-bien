@@ -3,9 +3,13 @@
 
 #include <termios.h>
 
+#define CMD_INIT {"", NULL, NULL, 0, -1, 0}
+
 #define CMD_BUFSIZ 2048
 
-#define CMD_INIT {"", NULL, NULL, 0, -1, 0}
+#define CMD_LINE_CHAR_ID '/'
+
+#define CMD_LINE_DELIM " \t\r\n\a"
 
 struct cmd {
         char buf[CMD_BUFSIZ];

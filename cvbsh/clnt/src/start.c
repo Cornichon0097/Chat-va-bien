@@ -27,7 +27,6 @@
 
 #include <cvb/logger.h>
 #include <cvb/net.h>
-#include <unistd.h>
 
 #include "clnt.h"
 
