@@ -32,9 +32,9 @@
 #include <cvb/fdmap.h>
 
 /**
- * \brief      Default file descriptors map size.
+ * \brief      File descriptors map padding.
  */
-#define DEFAULT_SIZE 10
+#define PADDING 10
 
 /**
  * \brief      Updates a file descriptors map.
@@ -47,8 +47,7 @@
  *
  * \return     The previous name.
  */
-static char *fdm_set(struct fdmap *const fdm, const int fd,
-                       char *const fdname)
+static char *fdm_set(struct fdmap *const fdm, const int fd, char *const fdname)
 {
         char *s = fdm->fdname[fd];
 
@@ -71,21 +70,25 @@ static char *fdm_set(struct fdmap *const fdm, const int fd,
  */
 char *fdm_put(struct fdmap *const fdm, int const fd, char *const fdname)
 {
+        int i;
+
         assert(fdm != NULL);
         assert(fd >= 0);
 
-        if (fdm->size <= fd) {
-                fdm->fdname = (char **) realloc(fdm->fdname, fd + DEFAULT_SIZE);
+        if (fd >= fdm->size) {
+                fdm->size = fd + PADDING;
+                fdm->fdname = (char **) realloc(fdm->fdname,
+                                                fdm->size * sizeof(char *));
 
                 if (fdm->fdname == NULL)
                         return (char *) -1;
 
-                memset(fdm->fdname + fdm->size, 0, fd + DEFAULT_SIZE);
-
-                fdm->size = fd + DEFAULT_SIZE;
+                for (i = fdm->back; i <= fd; ++i)
+                        fdm->fdname[i] = NULL;
         }
 
-        fdm->cursor = fd;
+        if (fd > fdm->back)
+                fdm->back = fd;
 
         return fdm_set(fdm, fd, fdname);
 }
@@ -104,8 +107,9 @@ char *fdm_put(struct fdmap *const fdm, int const fd, char *const fdname)
 char *fdm_remove(struct fdmap *const fdm, const int fd)
 {
         assert(fdm != NULL);
+        assert(fdm->fdname != NULL);
         assert(fd >= 0);
-        assert(fd <= fdm->cursor);
+        assert(fd <= fdm->back);
 
         return fdm_set(fdm, fd, NULL);
 }
@@ -124,7 +128,10 @@ char *fdm_get(const struct fdmap *const fdm, const int fd)
 {
         assert(fdm != NULL);
         assert(fd >= 0);
-        assert(fd <= fdm->cursor);
+        assert(fd <= fdm->back);
+
+        if (fdm->fdname == NULL)
+                return NULL;
 
         return fdm->fdname[fd];
 }
@@ -136,20 +143,22 @@ char *fdm_get(const struct fdmap *const fdm, const int fd)
  *
  * \param[in]  fdm     The file descriptors map
  * \param[in]  fdname  The file descriptor name
- * \param[in]  len     The file descriptor name length
  *
  * \return     The file descriptor on success, -1 otherwise.
  */
-int fdm_contains(const struct fdmap *const fdm, const char *const fdname,
-                   const size_t len)
+int fdm_contains(const struct fdmap *const fdm, const char *const fdname)
 {
         int i;
 
         assert(fdm != NULL);
+        assert(fdname != NULL);
 
-        for (i = 0; i <= fdm->cursor; ++i) {
+        if (fdm->fdname == NULL)
+                return -1;
+
+        for (i = 0; i <= fdm->back; ++i) {
                 if (fdm->fdname[i] != NULL) {
-                        if (strncmp(fdname, fdm->fdname[i], len) == 0)
+                        if (strcmp(fdname, fdm->fdname[i]) == 0)
                                 return i;
                 }
         }
@@ -171,6 +180,6 @@ void fdm_destroy(struct fdmap *const fdm)
         free(fdm->fdname);
 
         fdm->fdname = NULL;
-        fdm->cursor = 0;
+        fdm->back = 0;
         fdm->size = 0;
 }

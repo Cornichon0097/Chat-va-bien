@@ -42,7 +42,7 @@
  */
 struct fdmap {
         char **fdname;
-        int cursor;
+        int back;
         int size;
 };
 
@@ -92,11 +92,10 @@ char *fdm_get(const struct fdmap *fdm, int fd);
  *
  * \param[in]  fdm     The file descriptors map
  * \param[in]  fdname  The file descriptor name
- * \param[in]  len     The file descriptor name length
  *
  * \return     The file descriptor on success, -1 otherwise.
  */
-int fdm_contains(const struct fdmap *fdm, const char *fdname, size_t len);
+int fdm_contains(const struct fdmap *fdm, const char *fdname);
 
 /**
  * \brief      Destroys a file descriptors map.
