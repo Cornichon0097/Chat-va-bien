@@ -95,14 +95,13 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
         case MSG_CODE_SEND_AUTH: /* TODO (requires db) */
                 msg_recv_text(sfd, buf);
                 log_info("[srvr] Authentification request from '%s'", buf);
+                msg_send_code(sfd, 3);
 
                 if (fdm_contains(&(srvr->fdm), buf) != -1) {
-                        msg_send_code(sfd, 3);
                         msg_send_code(sfd, 2);
                         log_debug("[srvr] Authentification failed");
                 } else {
                         fdm_put(&(srvr->fdm), sfd, strdup(buf));
-                        msg_send_code(sfd, 3);
                         msg_send_code(sfd, 0);
                         log_debug("[srvr] Client authentified");
                 }
