@@ -45,7 +45,7 @@ _Noreturn static void usage(const char *const progname, const int status)
 
 int main(const int argc, const char *const argv[])
 {
-        struct srvr srvr = {FDLIST_INIT, NULL, -1};
+        struct srvr srvr = {FDLIST_INIT, FDMAP_INIT, NULL, -1};
 
         if (argc != 2)
                 usage(argv[0], EXIT_FAILURE);

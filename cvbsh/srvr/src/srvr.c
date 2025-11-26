@@ -12,7 +12,6 @@
 #include <cvb/net.h>
 
 #include "srvr.h"
-#include "cvb/fdlist.h"
 
 void srvr_set_logger(struct srvr *const srvr, const char *const pathname)
 {
@@ -85,15 +84,24 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
         case -1:
                 log_info("[srvr] Client disconnected");
                 fdl_remove(&(srvr->fdl), sfd);
+                free(fdm_remove(&(srvr->fdm), sfd));
                 close(sfd);
                 break;
         case 1: /* TODO */
         case 2: /* TODO */
-                log_info("[srvr] Authentification request received");
                 msg_recv_text(sfd, buf);
-                msg_send_code(sfd, 3);
-                msg_send_code(sfd, 0);
-                log_info("[srvr] Client authentified as %s", buf);
+                log_info("[srvr] Authentification request from '%s'", buf);
+
+                if (fdm_contains(&(srvr->fdm), buf) != -1) {
+                        msg_send_code(sfd, 3);
+                        msg_send_code(sfd, 2);
+                        log_info("[srvr] Authentification failed");
+                } else {
+                        fdm_put(&(srvr->fdm), sfd, strdup(buf));
+                        msg_send_code(sfd, 3);
+                        msg_send_code(sfd, 0);
+                        log_info("[srvr] Client authentified");
+                }
                 break;
 
         default: /* TODO */

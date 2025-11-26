@@ -4,9 +4,11 @@
 #include <stdio.h>
 
 #include <cvb/fdlist.h>
+#include <cvb/fdmap.h>
 
 struct srvr {
         struct fdlist fdl;
+        struct fdmap fdm;
         FILE *log;
         /* struct db_connect *dbc; */
         int listener;
