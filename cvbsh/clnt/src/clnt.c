@@ -74,25 +74,34 @@ static void clnt_cmd(struct clnt *const clnt)
 
 static void clnt_recv(struct clnt *const clnt, int sfd)
 {
-        char buf[MSG_BUFSIZ];
+        char msg[MSG_BUFSIZ];
+        char name[MSG_BUFSIZ];
         int8_t code = msg_recv_code(sfd);
 
         log_debug("[clnt] Incoming message");
 
         switch (code) {
         case MSG_CODE_RECV_PUBLIC:
-                if (msg_recv_text(sfd, buf) == -1) {
+                if ((msg_recv_text(sfd, msg) == -1)
+                    || (msg_recv_text(sfd, name) == -1)) {
                         log_error("[clnt] msg_recv_text(): %s", strerror(errno));
                 } else {
                         printf("\r \x1b[2K");
-                        printf("%s\n", buf);
+
+                        if (strcmp(name, clnt->name_last_msg) == 0) {
+                                printf("\t%s\n", msg);
+                        } else {
+                                printf("\e\[1m%s:\e\[0m\n\t%s\n", name, msg);
+                                strcpy(clnt->name_last_msg, name);
+                        }
+
                         fflush(stdout);
                         cmd_prompt(&(clnt->cmd));
                 }
                 break;
 
         case -1:
-                log_fatal("[clnt] msg_recv_code(): %s", strerror(errno));
+                log_fatal("[clnt] Connection to server lost");
                 exit(EXIT_FAILURE);
                 break;
 

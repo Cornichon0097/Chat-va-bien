@@ -8,11 +8,10 @@
 
 #include "cmd.h"
 
-#define CLNT_INIT {CMD_INIT, "", FDLIST_INIT, NULL, -1, -1}
-
 struct clnt {
         struct cmd cmd;
         char uname[MSG_BUFSIZ];
+        char name_last_msg[MSG_BUFSIZ];
         struct fdlist fdl;
         FILE *log_file;
         int srvr;

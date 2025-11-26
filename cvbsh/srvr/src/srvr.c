@@ -12,6 +12,7 @@
 #include <cvb/net.h>
 
 #include "srvr.h"
+#include "cvb/fdmap.h"
 
 void srvr_set_logger(struct srvr *const srvr, const char *const pathname)
 {
@@ -55,11 +56,12 @@ static void srvr_connect(struct srvr *const srvr, const int sfd)
                 if (fdl_add(&(srvr->fdl), clnt, POLLIN) != 0)
                         log_error("[srvr] fdl_add(): %s", strerror(errno));
                 else
-                        log_info("[srvr] New client connected");
+                        log_debug("[srvr] New client connected");
         }
 }
 
-static void srvr_broadcast(struct srvr *const srvr, const char *const msg)
+static void srvr_broadcast(struct srvr *const srvr, const char *const msg,
+                           const char *const name)
 {
         nfds_t i;
 
@@ -67,6 +69,7 @@ static void srvr_broadcast(struct srvr *const srvr, const char *const msg)
                 if (srvr->fdl.fds[i].fd != srvr->listener) {
                         msg_send_code(srvr->fdl.fds[i].fd, MSG_CODE_RECV_PUBLIC);
                         msg_send_text(srvr->fdl.fds[i].fd, msg, strlen(msg));
+                        msg_send_text(srvr->fdl.fds[i].fd, name, strlen(name));
                 }
         }
 
@@ -85,7 +88,11 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
         case -1:
                 fdname = fdm_remove(&(srvr->fdm), sfd);
 
-                log_info("[srvr] Client '%s' disconnected", fdname);
+                if (fdname != NULL)
+                        log_info("[srvr] Client '%s' disconnected", fdname);
+                else
+                        log_info("[srvr] Client disconnected");
+
                 fdl_remove(&(srvr->fdl), sfd);
                 free(fdname);
                 close(sfd);
@@ -109,7 +116,7 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
 
         case MSG_CODE_SEND_PUBLIC:
                 msg_recv_text(sfd, buf);
-                srvr_broadcast(srvr, buf);
+                srvr_broadcast(srvr, buf, fdm_get(&(srvr->fdm), sfd));
                 break;
 
         default:

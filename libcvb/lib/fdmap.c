@@ -107,9 +107,13 @@ char *fdm_put(struct fdmap *const fdm, int const fd, char *const fdname)
 char *fdm_remove(struct fdmap *const fdm, const int fd)
 {
         assert(fdm != NULL);
-        assert(fdm->fdname != NULL);
         assert(fd >= 0);
-        assert(fd <= fdm->back);
+
+        if (fdm->fdname == NULL)
+                return NULL;
+
+        if (fd > fdm->back)
+                return NULL;
 
         return fdm_set(fdm, fd, NULL);
 }
@@ -128,9 +132,11 @@ char *fdm_get(const struct fdmap *const fdm, const int fd)
 {
         assert(fdm != NULL);
         assert(fd >= 0);
-        assert(fd <= fdm->back);
 
         if (fdm->fdname == NULL)
+                return NULL;
+
+        if (fd > fdm->back)
                 return NULL;
 
         return fdm->fdname[fd];

@@ -46,7 +46,7 @@ _Noreturn static void usage(const char *const progname, const int status)
 
 int main(const int argc, const char *const argv[])
 {
-        struct clnt clnt = CLNT_INIT;
+        struct clnt clnt = {CMD_INIT, "", "", FDLIST_INIT, NULL, -1, -1};
         char service[] = "49152";
 
         if (argc != 3)
