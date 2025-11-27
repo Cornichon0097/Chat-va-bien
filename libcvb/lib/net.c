@@ -180,7 +180,7 @@ int net_fetch_socket(const char *const host, const char *const service)
  */
 int net_fetch_next(const char *const host, char *const service)
 {
-        assert (service != NULL);
+        assert(service != NULL);
 
         ++service[4];
 

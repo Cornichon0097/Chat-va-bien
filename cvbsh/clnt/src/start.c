@@ -1,5 +1,6 @@
 /*
- * CVB client.
+ * CVB client
+ *
  * Copyright (c) 2025 Antoni Blanche
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,6 +31,9 @@
 
 #include "clnt.h"
 
+/*
+ * Print usage and exit with status
+ */
 _Noreturn static void usage(const char *const progname, const int status)
 {
         if (status != EXIT_SUCCESS) {
@@ -43,6 +47,9 @@ _Noreturn static void usage(const char *const progname, const int status)
         exit(status);
 }
 
+/*
+ * Main function
+ */
 int main(const int argc, const char *const argv[])
 {
         struct clnt clnt = {CMD_INIT, "", "", FDLIST_INIT, NULL, -1, -1};

@@ -1,3 +1,26 @@
+/*
+ * CVB client commands
+ *
+ * Copyright (c) 2025 Antoni Blanche
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the “Software”), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -10,6 +33,9 @@
 
 #include "cmd.h"
 
+/*
+ * Set input as non-blocking
+ */
 static int cmd_set_non_blocking(struct cmd *const cmd)
 {
         cmd->flags = fcntl(cmd->fd, F_GETFL, 0);
@@ -20,6 +46,9 @@ static int cmd_set_non_blocking(struct cmd *const cmd)
         return fcntl(cmd->fd, F_SETFL, cmd->flags | O_NONBLOCK);
 }
 
+/*
+ * Set input modes
+ */
 static int cmd_set_input_modes(struct cmd *const cmd)
 {
         struct termios tattr;
@@ -36,6 +65,9 @@ static int cmd_set_input_modes(struct cmd *const cmd)
         return tcsetattr(cmd->fd, TCSAFLUSH, &tattr);
 }
 
+/*
+ * Initialize fd for inputs
+ */
 int cmd_init(struct cmd *const cmd, const int fd, char *const ps)
 {
         assert(cmd != NULL);
@@ -58,6 +90,9 @@ int cmd_init(struct cmd *const cmd, const int fd, char *const ps)
         return cmd_set_input_modes(cmd);
 }
 
+/*
+ * Delete last command line character
+ */
 static void cmd_del(struct cmd *const cmd)
 {
         assert(cmd != NULL);
@@ -71,6 +106,9 @@ static void cmd_del(struct cmd *const cmd)
         }
 }
 
+/*
+ * Get stroke key
+ */
 static void cmd_getkey(struct cmd *const cmd, const char c)
 {
         assert(cmd != NULL);
@@ -84,6 +122,9 @@ static void cmd_getkey(struct cmd *const cmd, const char c)
         }
 }
 
+/*
+ * Print help
+ */
 void cmd_help(void)
 {
         printf("\nList of commands:\n");
@@ -96,6 +137,9 @@ void cmd_help(void)
         printf("/help             Display this help\n");
 }
 
+/*
+ * Read command line
+ */
 int cmd_read(struct cmd *const cmd)
 {
         char c;
@@ -123,12 +167,18 @@ int cmd_read(struct cmd *const cmd)
         return cmd->buf[cmd->cursor];
 }
 
+/*
+ * Flush command buffer
+ */
 void cmd_flush(struct cmd *const cmd)
 {
         cmd->cursor = 0;
         cmd->buf[0] = '\0';
 }
 
+/*
+ * Print command prompt
+ */
 void cmd_prompt(struct cmd *const cmd)
 {
         assert(cmd != NULL);
@@ -139,6 +189,9 @@ void cmd_prompt(struct cmd *const cmd)
         fflush(stdout);
 }
 
+/*
+ * Restore input parameters
+ */
 void cmd_restore(const struct cmd *const cmd)
 {
         assert(cmd != NULL);

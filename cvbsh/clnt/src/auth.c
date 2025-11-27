@@ -1,3 +1,26 @@
+/*
+ * CVB client authentification
+ *
+ * Copyright (c) 2025 Antoni Blanche
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the “Software”), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,6 +30,9 @@
 
 #include "auth.h"
 
+/*
+ * Get information for authentification
+ */
 static int auth_get(const char *const field, char *buf, const size_t size)
 {
         printf("%s: ", field);
@@ -20,6 +46,9 @@ static int auth_get(const char *const field, char *buf, const size_t size)
         return 0;
 }
 
+/*
+ * Send request to the server
+ */
 static int auth_send(const int srvr, const char *const uname,
                      const char *const pwd)
 {
@@ -44,6 +73,9 @@ static int auth_send(const int srvr, const char *const uname,
         return msg_recv_code(srvr);
 }
 
+/*
+ * Send authentification request
+ */
 int auth_request(const int srvr, char *const uname, const size_t size)
 {
         char pwd[MSG_BUFSIZ];

@@ -1,3 +1,26 @@
+/*
+ * CVB server
+ *
+ * Copyright (c) 2025 Antoni Blanche
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the “Software”), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 #include <errno.h>
 #include <netdb.h>
 #include <signal.h>
@@ -12,6 +35,9 @@
 
 #include "srvr.h"
 
+/*
+ * Initialize server logger
+ */
 void srvr_set_logger(struct srvr *const srvr, const char *const pathname)
 {
        srvr->log = fopen(pathname, "w");
@@ -24,11 +50,17 @@ void srvr_set_logger(struct srvr *const srvr, const char *const pathname)
         log_debug("[srvr] Logging level set to %s", log_level(LOG_INFO));
 }
 
-static void srvr_handler(__attribute__((unused)) int signal)
+/*
+ * Server SIGINT handler
+ */
+_Noreturn static void srvr_handler(__attribute__((unused)) int signal)
 {
         exit(EXIT_SUCCESS);
 }
 
+/*
+ * Update server signal handler
+ */
 int srvr_set_handler(void)
 {
         struct sigaction act;
@@ -42,6 +74,9 @@ int srvr_set_handler(void)
         return sigaction(SIGINT, &act, NULL);
 }
 
+/*
+ * Accept a new connection from a client
+ */
 static void srvr_connect(struct srvr *const srvr, const int sfd)
 {
         int clnt;
@@ -58,6 +93,9 @@ static void srvr_connect(struct srvr *const srvr, const int sfd)
         }
 }
 
+/*
+ * Send a message to all clients
+ */
 static void srvr_broadcast(struct srvr *const srvr, const char *const msg,
                            const char *const name)
 {
@@ -74,6 +112,9 @@ static void srvr_broadcast(struct srvr *const srvr, const char *const msg,
         log_debug("[srvr] Message '%s' sent to all clients", msg);
 }
 
+/*
+ * Client request processing
+ */
 static void srvr_recv(struct srvr *const srvr, int sfd)
 {
         char buf[MSG_BUFSIZ];
@@ -123,6 +164,9 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
         }
 }
 
+/*
+ * Server loop
+ */
 void srvr_run(struct srvr *const srvr)
 {
         struct pollfd *ifd;
@@ -154,6 +198,9 @@ void srvr_run(struct srvr *const srvr)
         }
 }
 
+/*
+ * Server destroyer
+ */
 void srvr_cleanup(__attribute__((unused)) int status, void *arg)
 {
         struct srvr *srvr = (struct srvr *) arg;
