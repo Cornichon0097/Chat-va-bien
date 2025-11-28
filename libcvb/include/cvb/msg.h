@@ -33,9 +33,9 @@
 #define MSG_BUFSIZ 1024
 
 /**
-* \brief      Message codes (from client POV)
-*
-* \see        RFC for details
+ * \brief      Message codes (from client POV)
+ *
+ * \see        RFC for details
  */
 #define MSG_CODE_SEND_NO_AUTH  1
 #define MSG_CODE_SEND_AUTH     2

@@ -182,7 +182,8 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
         case MSG_CODE_RECV_PUBLIC:
                 if ((msg_recv_text(sfd, msg) == -1)
                     || (msg_recv_text(sfd, name) == -1)) {
-                        log_error("[clnt] msg_recv_text(): %s", strerror(errno));
+                        log_error("[clnt] msg_recv_text(): %s",
+                                  strerror(errno));
                 } else {
                         printf("\r \x1b[2K");
 
