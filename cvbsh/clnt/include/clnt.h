@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include <cvb/fdlist.h>
+#include <cvb/fdmap.h>
 #include <cvb/msg.h>
 
 #include "cmd.h"
@@ -39,6 +40,7 @@ struct clnt {
         char uname[MSG_BUFSIZ];
         char name_last_msg[MSG_BUFSIZ];
         struct fdlist fdl;
+        struct fdmap fdm;
         FILE *log_file;
         int srvr;
         int listener;

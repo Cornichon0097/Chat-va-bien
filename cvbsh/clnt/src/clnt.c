@@ -36,6 +36,7 @@
 #include "auth.h"
 #include "clnt.h"
 #include "cmd.h"
+#include "sock.h"
 
 /*
  * Initialize client logger
@@ -94,31 +95,76 @@ int clnt_fetch_socket(char *const service)
 }
 
 /*
+ * Send direct message
+ */
+/* static int clnt_send_dm(struct clnt *const clnt, const char *const name,
+                        const char *const msg)
+{
+        int sfd = fdm_contains(&(clnt->fdm), name);
+        char ip[16];
+        short port;
+
+        if (sfd == -1) {
+                log_info("[clnt] Try to connect with '%s'", name);
+
+                if (send_connect_request(clnt->srvr, name) != 1) {
+                        log_error("[clnt] Failed to connect with '%s'", name);
+
+                        return -1;
+                }
+
+                if (msg_recv_code(clnt->srvr) == 0)
+                        port = recv_ipv4_addr(clnt->srvr, ip);
+                else
+                        port = recv_ipv6_addr(clnt->srvr, ip);
+
+                if (port == -1) {
+                        log_error("[clnt] error");
+
+                        return -1;
+                }
+
+        }
+
+        return send_private_message(sfd, name);
+} */
+
+/*
  * User command processing
  */
 static void clnt_cmd(struct clnt *const clnt)
 {
-        if (cmd_read(&(clnt->cmd)) != '\n')
-                return;
+        char **args = cmd_parse(&(clnt->cmd));
 
-        if (clnt->cmd.buf[0] == CMD_LINE_CHAR_ID) {
-                if (strcmp(clnt->cmd.buf, "/help") == 0)
-                        cmd_help();
-                else if (strcmp(clnt->cmd.buf, "/quit") == 0)
-                        exit(EXIT_SUCCESS);
-                else if (strcmp(clnt->cmd.buf, "/exit") == 0)
-                        exit(EXIT_SUCCESS);
-                else
-                        fprintf(stderr, "Unknown command %s\n", clnt->cmd.buf);
+        if (args == NULL) {
+                send_public_message(clnt->srvr, clnt->cmd.buf);
         } else {
-                if ((clnt->cmd.buf[0] != '\0') && (clnt->cmd.buf[0] != '\n')) {
-                        msg_send_code(clnt->srvr, MSG_CODE_SEND_PUBLIC);
-                        msg_send_text(clnt->srvr, clnt->cmd.buf,
-                                      clnt->cmd.cursor);
+                switch (args[0][1]) {
+                /* case 'd':
+                        clnt_send_dm(clnt, args[1], args[2]);
+                        break; */
+
+                /* case 'f':
+                        log_error("[clnt] Command not supported");
+                        break; */
+
+                case 'h':
+                        cmd_help();
+                        break;
+
+                case 'q':
+                case 'e':
+                        exit(EXIT_SUCCESS);
+                        break;
+
+                default:
+                        fprintf(stderr, "\nUnknown command '%s'\n", args[0]);
+                        break;
                 }
         }
 
         cmd_prompt(&(clnt->cmd));
+        free(args);
 }
 
 /*
@@ -150,6 +196,9 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
                         fflush(stdout);
                         cmd_prompt(&(clnt->cmd));
                 }
+                break;
+
+        case MSG_CODE_DM_STATUS:
                 break;
 
         case -1:
@@ -211,12 +260,14 @@ void clnt_run(struct clnt *const clnt)
 
                 for (ifd = clnt->fdl.fds; ready > 0; ++ifd) {
                         if (ifd->revents == POLLIN) {
-                                if (ifd->fd == STDIN_FILENO)
-                                        clnt_cmd(clnt);
-                                else if (ifd->fd == clnt->listener)
+                                if (ifd->fd == STDIN_FILENO) {
+                                        if (cmd_read(&(clnt->cmd)) == '\n')
+                                                clnt_cmd(clnt);
+                                } else if (ifd->fd == clnt->listener) {
                                         clnt_connect();
-                                else
+                                } else {
                                         clnt_recv(clnt, ifd->fd);
+                                }
 
                                 --ready;
                         }

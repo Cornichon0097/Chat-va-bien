@@ -29,11 +29,12 @@
 #include <cvb/msg.h>
 
 #include "auth.h"
+#include "sock.h"
 
 /*
  * Get information for authentification
  */
-static int auth_get(const char *const field, char *buf, const size_t size)
+static int auth_read_line(const char *const field, char *buf, const size_t size)
 {
         printf("%s: ", field);
         fflush(stdout);
@@ -47,33 +48,6 @@ static int auth_get(const char *const field, char *buf, const size_t size)
 }
 
 /*
- * Send request to the server
- */
-static int auth_send(const int srvr, const char *const uname,
-                     const char *const pwd)
-{
-        int rc;
-
-        if (pwd == NULL)
-                rc = msg_send_code(srvr, MSG_CODE_SEND_NO_AUTH);
-        else
-                rc = msg_send_code(srvr, MSG_CODE_SEND_AUTH);
-
-        if (rc <= 0)
-                return rc;
-
-        msg_send_text(srvr, uname, strlen(uname));
-
-        if (pwd != NULL)
-                msg_send_text(srvr, pwd, strlen(pwd));
-
-        if (msg_recv_code(srvr) != MSG_CODE_RECV_AUTH)
-                return -1;
-
-        return msg_recv_code(srvr);
-}
-
-/*
  * Send authentification request
  */
 int auth_request(const int srvr, char *const uname, const size_t size)
@@ -84,15 +58,15 @@ int auth_request(const int srvr, char *const uname, const size_t size)
         assert(uname != NULL);
 
         while (auth != 0) {
-                auth_get("username", uname, size);
-                auth_get("password", pwd, MSG_BUFSIZ);
+                auth_read_line("username", uname, size);
+                auth_read_line("password", pwd, MSG_BUFSIZ);
 
                 log_debug("[auth] Send logging request as %s", uname);
 
                 if (*pwd == '\0')
-                        auth = auth_send(srvr, uname, NULL);
+                        auth = send_auth_request(srvr, uname, NULL);
                 else
-                        auth = auth_send(srvr, uname, pwd);
+                        auth = send_auth_request(srvr, uname, pwd);
 
                 if (auth == 1)
                         fprintf(stderr, "Wrong username or password\n");

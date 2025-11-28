@@ -1,5 +1,5 @@
 /*
- * CVB client commands
+ * CVB client communication
  *
  * Copyright (c) 2025 Antoni Blanche
  *
@@ -21,76 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef CMD_H
-#define CMD_H
+#ifndef SOCK_H
+#define SOCK_H
 
-#include <termios.h>
-
-/*
- * Command structure initializer
- */
-#define CMD_INIT {"", NULL, NULL, 0, -1, 0}
+#include <sys/types.h>
 
 /*
- * Command buffer size
+ * Send authentification request
  */
-#define CMD_BUFSIZ 2048
+int send_auth_request(int srvr, const char *uname, const char *psswd);
 
 /*
- * First command line character
+ * Send connection request
  */
-#define CMD_LINE_CHAR_ID '/'
+int8_t send_connect_request(int srvr, const char *name);
 
 /*
- * Command line delimiters
+ * Send public message
  */
-#define CMD_LINE_DELIM " \t\r\n\a"
+int send_public_message(int srvr, const char *msg);
 
 /*
- * Command structure
+ * Send private message
  */
-struct cmd {
-        char buf[CMD_BUFSIZ];
-        struct termios *tattr;
-        char *ps;
-        int cursor;
-        int fd;
-        int flags;
-};
+int send_private_message(int clnt, const char *msg);
 
 /*
- * Initialize fd for inputs
+ * Receive IPv4 address
  */
-int cmd_init(struct cmd *cmd, int fd, char *ps);
+short recv_ipv4_addr(int srvr, void *ip);
 
 /*
- * Print help
+ * Receive IPv6 address
  */
-void cmd_help(void);
+short recv_ipv6_addr(int srvr, void *ip);
 
-/*
- * Read command line
- */
-int cmd_read(struct cmd *cmd);
-
-/*
- * Parse command line
- */
-char **cmd_parse(struct cmd *cmd);
-
-/*
- * Flush command buffer
- */
-void cmd_flush(struct cmd *cmd);
-
-/*
- * Print command prompt
- */
-void cmd_prompt(struct cmd *cmd);
-
-/*
- * Restore input parameters
- */
-void cmd_restore(const struct cmd *cmd);
-
-#endif /* cmd.h */
+#endif /* sock.h */

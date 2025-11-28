@@ -34,12 +34,21 @@
 
 /**
 * \brief      Message codes (from client POV)
+*
+* \see        RFC for details
  */
 #define MSG_CODE_SEND_NO_AUTH  1
 #define MSG_CODE_SEND_AUTH     2
 #define MSG_CODE_RECV_AUTH     3
+
 #define MSG_CODE_SEND_PUBLIC   4
 #define MSG_CODE_RECV_PUBLIC   5
+
+#define MSG_CODE_DM_REQUEST    6
+#define MSG_CODE_DM_STATUS     7
+#define MSG_CODE_DM_CONNECT    8
+
+#define MSG_CODE_DM            9
 
 /**
  * \brief      Receives a message code.

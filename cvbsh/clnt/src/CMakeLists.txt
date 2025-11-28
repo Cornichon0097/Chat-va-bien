@@ -2,7 +2,8 @@ add_executable(clnt
     start.c
     clnt.c
     auth.c
-    cmd.c)
+    cmd.c
+    sock.c)
 
 target_include_directories(clnt
     PRIVATE

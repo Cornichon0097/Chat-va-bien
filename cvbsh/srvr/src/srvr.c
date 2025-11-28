@@ -34,6 +34,7 @@
 #include <cvb/net.h>
 
 #include "srvr.h"
+#include "cvb/fdmap.h"
 
 /*
  * Initialize server logger
@@ -119,29 +120,17 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
 {
         char buf[MSG_BUFSIZ];
         char *fdname;
+        /* int clnt_fd; */
         int8_t code = msg_recv_code(sfd);
 
         log_debug("[srvr] Incoming client request");
 
         switch (code) {
-        case -1:
-                fdname = fdm_remove(&(srvr->fdm), sfd);
-
-                if (fdname != NULL)
-                        log_info("[srvr] Client '%s' disconnected", fdname);
-                else
-                        log_info("[srvr] Client disconnected");
-
-                fdl_remove(&(srvr->fdl), sfd);
-                free(fdname);
-                close(sfd);
-                break;
-
         case MSG_CODE_SEND_NO_AUTH:
         case MSG_CODE_SEND_AUTH: /* TODO (requires db) */
                 msg_recv_text(sfd, buf);
                 log_info("[srvr] Authentification request from '%s'", buf);
-                msg_send_code(sfd, 3);
+                msg_send_code(sfd, MSG_CODE_RECV_AUTH);
 
                 if (fdm_contains(&(srvr->fdm), buf) != -1) {
                         msg_send_code(sfd, 2);
@@ -156,6 +145,53 @@ static void srvr_recv(struct srvr *const srvr, int sfd)
         case MSG_CODE_SEND_PUBLIC:
                 msg_recv_text(sfd, buf);
                 srvr_broadcast(srvr, buf, fdm_get(&(srvr->fdm), sfd));
+                break;
+
+        /* case MSG_CODE_DM_REQUEST:
+                msg_recv_text(sfd, buf);
+
+                clnt_fd = fdm_contains(&(srvr->fdm), buf);
+
+                if (clnt_fd == -1) {
+                        msg_send_code(sfd, MSG_CODE_DM_STATUS);
+                        msg_send_text(sfd, buf, strlen(buf));
+                        msg_send_code(sfd, 0);
+                } else {
+                        fdname = fdm_get(&(srvr->fdm), sfd);
+
+                        msg_send_code(sfd, MSG_CODE_DM_REQUEST);
+                        msg_send_text(sfd, fdname, strlen(fdname));
+                }
+                break;
+
+        case MSG_CODE_DM_STATUS:
+                msg_recv_text(sfd, buf);
+
+                clnt_fd = fdm_contains(&(srvr->fdm), buf);
+
+                if (clnt_fd == -1) {
+                        msg_send_code(sfd, MSG_CODE_DM_STATUS);
+                        msg_send_text(sfd, buf, strlen(buf));
+                        msg_send_code(sfd, 0);
+                } else {
+                        fdname = fdm_get(&(srvr->fdm), sfd);
+
+                        msg_send_code(sfd, MSG_CODE_DM_REQUEST);
+                        msg_send_text(sfd, fdname, strlen(fdname));
+                }
+                break; */
+
+        case -1:
+                fdname = fdm_remove(&(srvr->fdm), sfd);
+
+                if (fdname != NULL)
+                        log_info("[srvr] Client '%s' disconnected", fdname);
+                else
+                        log_info("[srvr] Client disconnected");
+
+                fdl_remove(&(srvr->fdl), sfd);
+                free(fdname);
+                close(sfd);
                 break;
 
         default:

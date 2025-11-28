@@ -129,12 +129,11 @@ void cmd_help(void)
 {
         printf("\nList of commands:\n");
         printf("\n");
-        printf("MESSAGE           Send public MESSAGE to all users\n");
-        /* printf("/dm USER MESSAGE  Send direct MESSAGE to USER\n"); */
-        /* printf("/ft PATHNAME      Transfer file PATHNAME to server\n"); */
-        printf("/quit             Exit chat app\n");
-        printf("/exit             Exit chat app\n");
-        printf("/help             Display this help\n");
+        printf(">MESSAGE           Send public MESSAGE to all users\n");
+        printf(">/dm USER MESSAGE  Send direct MESSAGE to USER\n");
+        /* printf(">/ft PATHNAME      Transfer file PATHNAME to server\n"); */
+        printf(">/help             Display this help\n");
+        printf(">/quit             Exit chat app\n");
 }
 
 /*
@@ -168,6 +167,30 @@ int cmd_read(struct cmd *const cmd)
 }
 
 /*
+ * Parse command line
+ */
+char **cmd_parse(struct cmd *cmd)
+{
+        char **args = NULL;
+
+        if (cmd->buf[0] != CMD_LINE_CHAR_ID)
+                return NULL;
+
+        args = (char **) malloc(3 * sizeof(char *));
+
+        if (args == NULL) {
+                perror("malloc()");
+                exit(EXIT_FAILURE);
+        }
+
+        args[0] = strtok(cmd->buf, CMD_LINE_DELIM);
+        args[1] = strtok(NULL, CMD_LINE_DELIM);
+        args[2] = strtok(NULL, CMD_LINE_DELIM);
+
+        return args;
+}
+
+/*
  * Flush command buffer
  */
 void cmd_flush(struct cmd *const cmd)
@@ -185,7 +208,7 @@ void cmd_prompt(struct cmd *const cmd)
 
         cmd_flush(cmd);
 
-        printf("\n\e\[1m%s\e\[0m> %s", cmd->ps, cmd->buf);
+        printf("\e\[1m%s\e\[0m> %s", cmd->ps, cmd->buf);
         fflush(stdout);
 }
 
@@ -201,6 +224,4 @@ void cmd_restore(const struct cmd *const cmd)
                 tcsetattr(cmd->fd, TCSAFLUSH, cmd->tattr);
                 free(cmd->tattr);
         }
-
-        printf("\n");
 }
