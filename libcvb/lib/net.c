@@ -35,6 +35,45 @@
 #include <cvb/logger.h>
 
 /**
+ * \brief      Internal getaddrinfo().
+ *
+ * The \c net_getaddrinfo() function returns one or more address information
+ * structures with the socket type defined as SOCK_STREAM.
+ *
+ * \param[in]  host     The host
+ * \param[in]  service  The service
+ * \param[in]  flags    The flags
+ *
+ * \return     The address information structure.
+ */
+static struct addrinfo *net_getaddrinfo(const char *const host,
+                                        const char *const service,
+                                        const int flags)
+{
+        struct addrinfo hints, *res;
+        int rc;
+
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_protocol = 0;
+        hints.ai_flags = flags;
+
+        rc = getaddrinfo(host, service, &hints, &res);
+
+        if (rc != 0) {
+                if (rc == EAI_SYSTEM)
+                        log_error("[net] getaddrinfo(): %s", strerror(errno));
+                else
+                        log_error("[net] getaddrinfo(): %s", gai_strerror(rc));
+
+                return NULL;
+        }
+
+        return res;
+}
+
+/**
  * \brief      Binds a socket.
  *
  * The \c net_bind_socket() function tries to \c bind() each socket provided by
@@ -108,59 +147,48 @@ static int net_connect_socket(const struct addrinfo *rp)
  */
 int net_fetch_socket(const char *const host, const char *const service)
 {
-        struct addrinfo hints, *res;
+        struct addrinfo *res;
         int sfd;
-        int rc;
 
         assert(service != NULL);
-
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = 0;
-
-        if (host == NULL)
-                hints.ai_flags = AI_PASSIVE;
-
-        rc = getaddrinfo(host, service, &hints, &res);
-
-        if (rc != 0) {
-                if (rc == EAI_SYSTEM)
-                        log_error("[net] getaddrinfo(): %s", strerror(errno));
-                else
-                        log_error("[net] getaddrinfo(): %s", gai_strerror(rc));
-
-                return -1;
-        }
 
         if (host == NULL) {
                 log_debug("[net] Trying to listen on port %s", service);
 
+                res = net_getaddrinfo(NULL, service, AI_PASSIVE);
                 sfd = net_bind_socket(res);
 
-                if (listen(sfd, 10) != 0)
-                        log_warn("[net] listen(): %s", strerror(errno));
-        } else {
-                log_debug("[net] Attempt connection to %s:%s", host, service);
+                freeaddrinfo(res);
 
-                sfd = net_connect_socket(res);
-        }
-
-        freeaddrinfo(res);
-
-        if (sfd < 0) {
-                if (host == NULL)
+                if (sfd < 0) {
                         log_warn("[net] Failed to bind a socket");
-                else
+
+                        return -1;
+                }
+
+                if (listen(sfd, 10) != 0) {
+                        log_error("[net] listen(): %s", strerror(errno));
+
+                        return -1;
+                }
+
+                log_info("[net] Listening on port %s", service);
+        } else {
+                log_debug("[net] Connecting to %s:%s", host, service);
+
+                res = net_getaddrinfo(host, service, 0);
+                sfd = net_connect_socket(res);
+
+                freeaddrinfo(res);
+
+                if (sfd < 0) {
                         log_warn("[net] Failed to connect a socket");
 
-                return -1;
-        }
+                        return -1;
+                }
 
-        if (host == NULL)
-                log_info("[net] Listening on port %s", service);
-        else
                 log_info("[net] Successfuly connected to %s:%s", host, service);
+        }
 
         return sfd;
 }
@@ -168,36 +196,52 @@ int net_fetch_socket(const char *const host, const char *const service)
 /**
  * \brief      Fetches next socket.
  *
- * The \c net_fetch_next() function tries to fetch a socket with the very after
- * port number \a service.
+ * The \c net_fetch_next() function tries to fetch an available socket suitable
+ * for \c net_accept_clnt().
  *
  * \see        net_fetch_socket()
  *
- * \param[in]  host     The host
- * \param      service  The service
- *
  * \return     The fetched socket.
  */
-int net_fetch_next(const char *const host, char *const service)
+int net_fetch_next(void)
 {
-        assert(service != NULL);
+        char service[NI_MAXSERV];
+        struct sockaddr_storage addr;
+        socklen_t addrlen = sizeof(addr);
+        struct addrinfo *res;
+        int sfd;
+        int rc;
 
-        ++service[4];
+        res = net_getaddrinfo(NULL, "0", AI_PASSIVE | AI_NUMERICHOST);
+        sfd = net_bind_socket(res);
 
-        if (service[4] == ':') {
-                service[4] = '0';
-                ++service[3];
-        }
+        freeaddrinfo(res);
 
-        if (service[3] == ':') {
-                service[3] = '0';
-                ++service[2];
-        }
+        if (listen(sfd, 10) != 0) {
+                log_error("[net] listen(): %s", strerror(errno));
 
-        if (service[2] == ':')
                 return -1;
+        }
 
-        return net_fetch_socket(host, service);
+        if (getsockname(sfd, (struct sockaddr *) &addr, &addrlen) != 0) {
+                log_warn("[net] getsockname(): %s", strerror(errno));
+
+                return sfd;
+        }
+
+        rc = getnameinfo((struct sockaddr *) &addr, addrlen,
+                         NULL, 0, service, NI_MAXSERV, NI_NUMERICHOST);
+
+        if (rc != 0) {
+                if (rc == EAI_SYSTEM)
+                        log_warn("[net] getnameinfo(): %s", strerror(errno));
+                else
+                        log_warn("[net] getnameinfo(): %s", gai_strerror(rc));
+        } else {
+                log_debug("[net] Listening on port %s", service);
+        }
+
+        return sfd;
 }
 
 /**
@@ -216,13 +260,13 @@ int net_fetch_next(const char *const host, char *const service)
  */
 int net_accept_clnt(const int listener)
 {
-        struct sockaddr addr;
-        socklen_t addrlen;
         char host[NI_MAXHOST], service[NI_MAXSERV];
+        struct sockaddr_storage addr;
+        socklen_t addrlen;
         int sfd;
         int rc;
 
-        sfd = accept(listener, &addr, &addrlen);
+        sfd = accept(listener, (struct sockaddr *) &addr, &addrlen);
 
         if (sfd < 0) {
                 log_error("[net] accept(): %s", strerror(errno));
@@ -230,8 +274,8 @@ int net_accept_clnt(const int listener)
                 return -1;
         }
 
-        rc = getnameinfo(&addr, addrlen, host, NI_MAXHOST,
-                         service, NI_MAXSERV, NI_NUMERICHOST);
+        rc = getnameinfo((struct sockaddr *) &addr, addrlen,
+                         host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICHOST);
 
         if (rc != 0) {
                 if (rc == EAI_SYSTEM)

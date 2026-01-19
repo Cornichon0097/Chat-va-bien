@@ -43,17 +43,14 @@ int net_fetch_socket(const char *host, const char *service);
 /**
  * \brief      Fetches next socket.
  *
- * The \c net_fetch_next() function tries to fetch a socket with the very after
- * port number \a service.
+ * The \c net_fetch_next() function tries to fetch an available socket suitable
+ * for \c net_accept_clnt().
  *
  * \see        net_fetch_socket()
  *
- * \param[in]  host     The host
- * \param      service  The service
- *
  * \return     The fetched socket.
  */
-int net_fetch_next(const char *host, char *service);
+int net_fetch_next(void);
 
 /**
  * \brief      Accepts a new client connection.

@@ -62,7 +62,6 @@ int main(const int argc, const char *const argv[])
                 -1,
                 -1
         };
-        char service[] = "49152";
 
         if (argc != 3)
                 usage(argv[0], EXIT_FAILURE);
@@ -82,19 +81,20 @@ int main(const int argc, const char *const argv[])
                 exit(EXIT_FAILURE);
         }
 
-        clnt.listener = clnt_fetch_socket(service);
-
-        if (clnt.listener == -1) {
-                log_fatal("[start] Failed to fetch a socket");
-                exit(EXIT_FAILURE);
-        }
-
         clnt.srvr = net_fetch_socket(argv[1], argv[2]);
 
         if (clnt.srvr == -1) {
                 log_fatal("[start] Failed to connect to the server");
                 exit(EXIT_FAILURE);
         }
+
+        /* Can be performed later (when incomming request) */
+        /* clnt.listener = net_fetch_next();
+
+        if (clnt.listener == -1) {
+                log_fatal("[start] Failed to fetch a socket");
+                exit(EXIT_FAILURE);
+        } */
 
         clnt_run(&clnt);
 
