@@ -1,6 +1,6 @@
 /**
  * \file       fdlist.c
- * \brief      Functions dealing with file descriptors lists.
+ * \brief      Functions dealing with file descriptors list.
  *
  * Copyright (c) 2025 Antoni Blanche
  *

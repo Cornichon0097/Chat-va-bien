@@ -166,7 +166,7 @@ int net_fetch_socket(const char *const host, const char *const service)
                         return -1;
                 }
 
-                if (listen(sfd, 10) != 0) {
+                if (listen(sfd, SOMAXCONN) != 0) {
                         log_error("[net] listen(): %s", strerror(errno));
 
                         return -1;
@@ -217,7 +217,7 @@ int net_fetch_next(void)
 
         freeaddrinfo(res);
 
-        if (listen(sfd, 10) != 0) {
+        if (listen(sfd, SOMAXCONN) != 0) {
                 log_error("[net] listen(): %s", strerror(errno));
 
                 return -1;
