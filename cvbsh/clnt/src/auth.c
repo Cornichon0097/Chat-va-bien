@@ -48,7 +48,7 @@ static int auth_read_line(const char *const field, char *buf, const size_t size)
 }
 
 /*
- * Send authentification request
+ * Client authentification request
  */
 int auth_request(const int srvr, char *const uname, const size_t size)
 {

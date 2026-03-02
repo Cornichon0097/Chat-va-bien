@@ -33,6 +33,11 @@
 #define MSG_BUFSIZ 1024
 
 /**
+ * \brief      Maximum message file content.
+ */
+#define MSG_MAXCONTENT 8192
+
+/**
  * \brief      Message codes (from client POV)
  *
  * \see        RFC for details
@@ -49,6 +54,8 @@
 #define MSG_CODE_DM_CONNECT    8
 
 #define MSG_CODE_DM            9
+#define MSG_CODE_FILE          10
+#define MSG_CODE_FILE_CONTENT  11
 
 /**
  * \brief      Receives a message code.

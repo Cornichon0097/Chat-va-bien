@@ -130,10 +130,10 @@ void cmd_help(void)
         printf("\nList of commands:\n");
         printf("\n");
         printf(">MESSAGE           Send public MESSAGE to all users\n");
-        printf(">/dm USER MESSAGE  Send direct MESSAGE to USER\n");
-        /* printf(">/ft PATHNAME      Transfer file PATHNAME to server\n"); */
-        printf(">/help             Display this help\n");
-        printf(">/quit             Exit chat app\n");
+        printf(">%cdm USER MESSAGE  Send direct MESSAGE to USER\n", CMD_LINE_CHAR_ID);
+        /* printf(">%cft PATHNAME      Transfer file PATHNAME to server\n", CMD_LINE_CHAR_ID); */
+        printf(">%chelp             Display this help\n", CMD_LINE_CHAR_ID);
+        printf(">%cquit             Exit chat app\n", CMD_LINE_CHAR_ID);
 }
 
 /*
@@ -208,7 +208,7 @@ void cmd_prompt(struct cmd *const cmd)
 
         cmd_flush(cmd);
 
-        printf("\e\[1m%s\e\[0m> %s", cmd->ps, cmd->buf);
+        printf("\n\e\[1m%s\e\[0m> %s", cmd->ps, cmd->buf);
         fflush(stdout);
 }
 

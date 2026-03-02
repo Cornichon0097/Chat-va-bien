@@ -79,22 +79,6 @@ int clnt_set_handler(void)
 }
 
 /*
- * Fetch the first available socket
- */
-int clnt_fetch_socket(char *const service)
-{
-        int sfd = net_fetch_socket(NULL, service);
-
-        while (sfd == -1) {
-                log_debug("[clnt] Port %s busy", service);
-
-                sfd = net_fetch_next(NULL, service);
-        }
-
-        return sfd;
-}
-
-/*
  * Send direct message
  */
 /* static int clnt_send_dm(struct clnt *const clnt, const char *const name,
@@ -188,18 +172,15 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
                         printf("\r \x1b[2K");
 
                         if (strcmp(name, clnt->name_last_msg) == 0) {
-                                printf("\t%s\n", msg);
+                                printf("\t%s", msg);
                         } else {
-                                printf("\e\[1m%s:\e\[0m\n\t%s\n", name, msg);
+                                printf("\e\[1m%s:\e\[0m\n\t%s", name, msg);
                                 strcpy(clnt->name_last_msg, name);
                         }
 
                         fflush(stdout);
                         cmd_prompt(&(clnt->cmd));
                 }
-                break;
-
-        case MSG_CODE_DM_STATUS:
                 break;
 
         case -1:
@@ -219,7 +200,7 @@ static void clnt_recv(struct clnt *const clnt, int sfd)
 static void clnt_connect(void)
 {
         log_debug("[clnt] Inocming connection");
-        log_fatal("[clnt] Function not supported");
+        log_fatal("[clnt] Operation not supported");
         abort();
 }
 

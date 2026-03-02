@@ -57,11 +57,6 @@ void clnt_set_logger(struct clnt *clnt, const char *pathname);
 int clnt_set_handler(void);
 
 /*
- * Fetch the first available socket
- */
-int clnt_fetch_socket(char *service);
-
-/*
  * Client loop
  */
 void clnt_run(struct clnt *clnt);
