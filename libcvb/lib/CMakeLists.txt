@@ -10,6 +10,10 @@ target_include_directories(cvb
     PUBLIC
     "${PROJECT_SOURCE_DIR}/libcvb/include")
 
+target_link_libraries(cvb
+    PRIVATE
+    c_flags)
+
 target_compile_definitions(cvb
     PRIVATE
     LOGGER_USE_COLOR)

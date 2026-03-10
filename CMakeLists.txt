@@ -10,13 +10,19 @@ include(CTest)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_STANDARD 90)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
+
+add_library(c_flags
+    INTERFACE)
+target_compile_options(c_flags
+    INTERFACE
+    -Wall
+    -Wextra
+    -Wwrite-strings
+    -Wstrict-prototypes
+    -Wunreachable-code
+    -Werror)
 
 add_subdirectory(libcvb)
 add_subdirectory(cvbsh)

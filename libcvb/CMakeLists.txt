@@ -1,8 +1,5 @@
 add_subdirectory(lib)
-
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_subdirectory(unittests)
-endif()
+add_subdirectory(unittests)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_subdirectory(docs)

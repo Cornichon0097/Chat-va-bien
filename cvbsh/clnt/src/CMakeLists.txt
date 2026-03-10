@@ -11,4 +11,8 @@ target_include_directories(clnt
 
 target_link_libraries(clnt
     PRIVATE
+    c_flags)
+
+target_link_libraries(clnt
+    PRIVATE
     cvb)
