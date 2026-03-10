@@ -33,23 +33,6 @@
 #define DEFAULT_SIZE 16
 
 /**
- * \brief      Performs a left shift.
- *
- * The \c _fdl_shift_left() function moves to the left each elements of the
- * file descriptors list \a fdl from \a start.
- *
- * \param      fdl    The file descriptors list
- * \param[in]  start  The first element to move
- */
-/* static void _fdl_shift_left(struct fdlist *const fdl, const nfds_t start)
-{
-        nfds_t i;
-
-        for (i = start; i < fdl->nfds - 1; ++i)
-                fdl->fds[i] = fdl->fds[i + 1];
-} */
-
-/**
  * \brief      Adds a file descriptor.
  *
  * The \c fdl_add() function adds the file descriptor \a fd at the end of the
